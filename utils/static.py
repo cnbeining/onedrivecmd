@@ -7,7 +7,7 @@
 
 global VER, redirect_uri, client_secret, client_id, api_base_url, scopes
 
-VER = 'OnedriveCMD V0.0.1'
+VER = 'OnedriveCMD V0.0.2'
 
 redirect_uri = 'https://od.cnbeining.com'
 client_secret = 'RQdGA24FctsiBGuP8v3juea'

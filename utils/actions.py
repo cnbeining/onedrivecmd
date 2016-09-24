@@ -256,6 +256,35 @@ def do_move(client, args):
         get_bare_item_by_path(client, from_location).update(renamed_item)
 
 
+def do_remote(client, args):
+    """OneDriveClient, [str] -> OneDriveClient
+    
+    Do a remote upload to the Drive.
+    
+    A link will be shown to get the current state of uploading.
+    
+    args.rest: list of remote URLs.
+    """
+    for i in args.rest:
+        # There is no gurantee that this shall be normal, JUST like
+        # all the similar services
+        json_data = {'@content.sourceUrl': i, 'file': {}, 'name': path_to_name(i)}
+
+        root = client.item(drive='me', id='root').get()
+        parent_id = root.id
+        
+        req = requests.post(api_base_url + 'drive/items/{parent_id}/children'.format(parent_id = parent_id),
+                            data = json.dumps(json_data),
+                            headers = {'Authorization': 'bearer {access_token}'.format(access_token = get_access_token(client)),
+                                       'Content-Type': 'application/json',
+                                       'Prefer': 'respond-async',})
+
+        print(req.headers['location'])
+
+    return client
+
 
 if __name__=='__main__':
-    unittest.main()
+    pass
+
+

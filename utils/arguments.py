@@ -89,7 +89,7 @@ def parse_args():
     ## Script actions
     # Set mutually exclusive actions
     parser.add_argument('mode',
-                        choices = ['init', 'get', 'list', 'put', 'delete', 'mkdir', 'move'],
+                        choices = ['init', 'get', 'list', 'put', 'delete', 'mkdir', 'move', 'remote'],
                         help = """Action to be done.
                         init: Use OAuth to setup the programme
                         get: get a remote item to local
@@ -97,7 +97,8 @@ def parse_args():
                         put: put a local item to remote
                         delete: delete a remote item
                         mkdir: make a folder at remote
-                        move: move a remote item to a remote location""")
+                        move: move a remote item to a remote location
+                        remote: download a remote link to drive""")
 
     # Take the rest of arguments for further parsing
     parser.add_argument('rest',

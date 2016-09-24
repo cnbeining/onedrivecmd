@@ -19,6 +19,7 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
   - Individual file put and get operations
   - List operation (shows filesize and timestamp)
   - Download and upload progress bar(partial)
+  - Remote download links to your drive(NEW! Not even available via Web console)
   - Python 2 and 3 compatible(should be!)
 
 ### Usage
@@ -30,6 +31,8 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
         onedrivecmd.py [OPTIONS] put /tmp/hello.txt od:/bar/
         onedrivecmd.py [OPTIONS] delete od:/foo/bar
         onedrivecmd.py [OPTIONS] mkdir od:/foo/bar/
+        onedrivecmd.py [OPTIONS] remote http://thecatapi.com/api/images/get?format=src&type=gif
+        
 
 
       -conf="~/onedrive.pickle": Config file path
@@ -122,6 +125,8 @@ The delete can only move the item to the trash bin, as there is no way of just d
 
     $ python onedrivecmd.py mkdir od:/145
 
+    $ python onedrivecmd.py remote "http://wscont2.apps.microsoft.com/winstore/1x/.../Screenshot.225037.100000.jpg"
+    https://api.onedrive.com/v1.0/monitor/...
 
 ### TODO
 
