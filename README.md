@@ -1,2 +1,144 @@
-# odcmd
-Developing.
+onedrivecmd
+=======
+
+A command line client for Onedrive.
+
+Based on [onedrive-sdk-python](https://github.com/OneDrive/onedrive-sdk-python) , with lots of modifications.
+
+This is very much a copycat of [megacmd](https://github.com/t3rm1n4l/megacmd) , but in different language.
+
+
+### Why onedrivecmd?
+Onedrive is a cloud-storage service provided by Microsoft. Education users can get 1TB of storage for free, which can be redeemed at https://products.office.com/en-us/student?tab=students .
+
+Since the recent update of Onedrive's API, there aren't a lot of *nix softwares that would provide support to Onedrive, most of them are syncing softwares: But I prefer have more control of what I am doing. So here it is, a tiny client that can do the jobs for you.
+
+### Features
+  - Ability to access files and folders using a path URI
+  - Configuration file (~/onedrive.pickle)
+  - Individual file put and get operations
+  - List operation (shows filesize and timestamp)
+  - Download and upload progress bar(partial)
+  - Python 2 and 3 compatible(should be!)
+
+### Usage
+    Usage ./onedrivecmd.py:
+        onedrivecmd.py -h 
+        onedrivecmd.py [OPTIONS] init
+        onedrivecmd.py [OPTIONS] list od:/foo/bar/
+        onedrivecmd.py [OPTIONS] get od:/foo/file.txt /tmp/
+        onedrivecmd.py [OPTIONS] put /tmp/hello.txt od:/bar/
+        onedrivecmd.py [OPTIONS] delete od:/foo/bar
+        onedrivecmd.py [OPTIONS] mkdir od:/foo/bar/
+
+
+      -conf="~/onedrive.pickle": Config file path
+      -h: Help
+      -hack: Use aria2 to download file, or a home-brew uploader that comes with progress bar
+      -recursive=false: Recursive listing
+      -chunk=10485760: Chunk size when uploading
+      -url=False: Only display the URL when downloading
+
+
+
+### How to run onedrivecmd?
+
+#### Install dependencies
+
+There are 3 packages you should install:
+
+    onedrivesdk
+    progress
+    requests
+
+Do a ```pip install -r requirements.txt``` at the folder.
+
+#### Login
+
+Do a ```onedrivecmd.py init``` .
+
+You shall be given a URL like
+
+```https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e```
+
+Authorize your login. 
+
+Yes you shall be redirected to ```https://od.cnbeining.com/```, which apparently is owned by me. This page is hosted at [branch gh-pages](https://github.com/cnbeining/onedrivecmd/blob/gh-pages/index.html), with a Cloudflare at the front. I am doing this so you can just do a quick select-all and paste. If you have doubt, change the information in ```static.py```.
+
+The login information is storaged at ```~/onedrive.pickle```, or any location you demanded. This file should be treated as secret as your password.
+
+After this very first time init, the ```access_token``` shall be refreshed every time you run the programme.
+
+
+### Pitfalls
+To list directory contents, use:
+
+    $ onedrivecmd.py list od:/foo/bar/
+
+Names ending with '/' is a directory. The size of directory is the size of the sum of its content.
+
+To recursively list a directory use, -recursive option.
+
+    $ onedrivecmd.py -recursive list od:/foo/bar/
+
+The delete can only move the item to the trash bin, as there is no way of just delete the item. Make sure you clean your trash.
+
+    $ onedrivecmd.py delete od:/foo/bar/file
+
+
+### Examples
+    $ python onedrivecmd.py  init
+    
+    https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e
+    
+    Paste this URL into your browser, approve the app's access.
+    Copy all the code in the new window, and paste it below:
+    Paste code here: Ma0d6f772-****-e5ea-8d5a-******    
+
+    $ python onedrivecmd.py list od:/
+    od:/133/	0	2016-09-24T04:17:58.957000Z
+    od:/134/	0	2016-09-24T05:11:17.190000Z
+    od:/New Folder/	351	2016-09-22T03:02:25.423000Z
+    od:/1.png	342677	2016-09-24T04:28:51.617000Z
+    od:/OneDrive 入门.pdf	1159342	2016-08-23T03:03:55.043000Z
+
+    $ python onedrivecmd.py -hack put /Users/Beining/Documents/1.png od:/
+    Uploading |################################| 100.0% - 0s
+
+
+    $ python onedrivecmd.py -hack get od:/1.png
+    [#e257f9 16KiB/334KiB(4%) CN:1 DL:230KiB ETA:1s]                                                                                                                            
+    09/24 02:10:56 [NOTICE] Download complete: **onedrivecmd/1.png
+    
+    Download Results:
+    gid   |stat|avg speed  |path/URI
+    ======+====+===========+=======================================================
+    e257f9|OK  |   343KiB/s|**onedrivecmd/1.png
+    
+    Status Legend:
+    (OK):download completed.
+    
+    With this way you can have progress bar.
+
+    $ python onedrivecmd.py mkdir od:/145
+
+
+### TODO
+
+* Move
+* Recursive list(could be my machine too slow)
+* Sync
+
+### How to Contribute ?
+
+Any PR or issue would be appreciated. 
+
+### License
+
+AGPL
+
+### Author
+
+Beining, https://www.cnbeining.com/ , ```i [at] cnbeining.com``` .
+
+Driven by coffee, coffee and coffee.

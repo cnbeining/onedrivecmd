@@ -1,0 +1,72 @@
+#!/usr/bin/env python
+#coding:utf-8
+# Author:  Beining --<i@cnbeining.com>
+# Purpose: A command line client for OneDrive
+# Created: 09/23/2016
+
+import onedrivesdk
+
+from utils.actions import * 
+from utils.arguments import parse_args
+from utils.session import *
+from utils.static import *
+from utils.uploader import *
+from utils.helper_item import *
+from utils.helper_file import *
+
+
+def main():
+    """None->None
+    
+    Main entrance of the script.
+    
+    Init the script,
+    Parse arguments,
+    Call the right action.
+    """
+    global VER, redirect_uri, client_secret, client_id, api_base_url, scopes
+    
+    http_provider = onedrivesdk.HttpProvider()
+    auth_provider = onedrivesdk.AuthProvider(
+        http_provider=http_provider,
+        client_id=client_id,
+        scopes=scopes)
+    
+    client = onedrivesdk.OneDriveClient(api_base_url, auth_provider, http_provider)
+    
+    ## parse arguments
+    args = parse_args()
+    
+    ## Call action
+    # Init
+    if args.mode == 'init':
+        client = do_init(client)
+        save_session(client, path = args.conf)
+        return
+    
+    ## Load session
+    # If the mode is not init, there has to be a working session
+    # located at the conf path. 
+    client = load_session(client, path = args.conf)
+    
+    # get
+    if args.mode == 'get':
+        do_get(client, args)
+
+    elif args.mode == 'list':
+        do_list(client, args)
+
+    elif args.mode == 'put':
+        do_put(client, args)
+
+    elif args.mode == 'delete':
+        do_delete(client, args)
+
+    elif args.mode == 'mkdir':
+        do_mkdir(client, args)
+
+    elif args.mode == 'move':
+        do_move(client, args)
+
+if __name__=='__main__':
+    main()
