@@ -5,7 +5,6 @@
 # Created: 09/24/2016
 
 import sys
-import unittest
 import onedrivesdk
 from helper_file import *
 

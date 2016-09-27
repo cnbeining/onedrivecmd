@@ -1,12 +1,11 @@
 onedrivecmd
 =======
 
-A command line client for Onedrive.
+A command line client for Onedrive(including Office 365 and Business).
 
 Based on [onedrive-sdk-python](https://github.com/OneDrive/onedrive-sdk-python) , with lots of modifications.
 
 This is very much a copycat of [megacmd](https://github.com/t3rm1n4l/megacmd) , but in different language.
-
 
 ### Why onedrivecmd?
 Onedrive is a cloud-storage service provided by Microsoft. Education users can get 1TB of storage for free, which can be redeemed at https://products.office.com/en-us/student?tab=students .
@@ -15,17 +14,19 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
 
 ### Features
   - Ability to access files and folders using a path URI
-  - Configuration file (~/onedrive.pickle)
+  - Configuration file (./onedrive.json)
   - Individual file put and get operations
   - List operation (shows filesize and timestamp)
   - Download and upload progress bar(partial)
-  - Remote download links to your drive(NEW! Not even available via Web console)
+  - Remote download links to your drive(NEW! Not even available via Web console) (Only available at personal due to API limit)
+  - Supports Office 365!
   - Python 2 and 3 compatible(should be!)
 
 ### Usage
     Usage ./onedrivecmd.py:
         onedrivecmd.py -h 
         onedrivecmd.py [OPTIONS] init
+        onedrivecmd.py [OPTIONS] init business
         onedrivecmd.py [OPTIONS] list od:/foo/bar/
         onedrivecmd.py [OPTIONS] get od:/foo/file.txt /tmp/
         onedrivecmd.py [OPTIONS] put /tmp/hello.txt od:/bar/
@@ -35,7 +36,7 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
         
 
 
-      -conf="~/onedrive.pickle": Config file path
+      -conf="~/onedrive.pickle": Config file path, this file is as important as your password!
       -h: Help
       -hack: Use aria2 to download file, or a home-brew uploader that comes with progress bar
       -recursive=false: Recursive listing
@@ -62,13 +63,15 @@ Do a ```onedrivecmd.py init``` .
 
 You shall be given a URL like
 
-```https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e```
+```
+https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e
+```
 
 Authorize your login. 
 
 Yes you shall be redirected to ```https://od.cnbeining.com/```, which apparently is owned by me. This page is hosted at [branch gh-pages](https://github.com/cnbeining/onedrivecmd/blob/gh-pages/index.html), with a Cloudflare at the front. I am doing this so you can just do a quick select-all and paste. If you have doubt, change the information in ```static.py```.
 
-The login information is storaged at ```~/onedrive.pickle```, or any location you demanded. This file should be treated as secret as your password.
+The login information is storaged at ```./onedrive.json```, or any location you demanded. This file should be treated as secret as your password.
 
 After this very first time init, the ```access_token``` shall be refreshed every time you run the programme.
 
@@ -90,6 +93,7 @@ The delete can only move the item to the trash bin, as there is no way of just d
 
 
 ### Examples
+
     $ python onedrivecmd.py  init
     
     https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e
@@ -132,7 +136,8 @@ The delete can only move the item to the trash bin, as there is no way of just d
 
 * Move
 * Recursive list(could be my machine too slow)
-* Sync
+* I will not write sync since we have [rclone](https://github.com/ncw/rclone) which already supports Onedrive. Feel free to send me pull requests though.
+* I cannot think of anything. Open issues if you have amazing ideas.
 
 ### How to Contribute ?
 
@@ -147,3 +152,8 @@ AGPL
 Beining, https://www.cnbeining.com/ , ```i [at] cnbeining.com``` .
 
 Driven by coffee, coffee and coffee.
+
+
+### 中文说明
+
+[点这里](https://github.com/cnbeining/onedrivecmd/wiki/%E4%B8%AD%E6%96%87%E8%AF%B4%E6%98%8E)

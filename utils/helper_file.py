@@ -83,5 +83,10 @@ def get_remote_path_by_item(item):
     return unquote(item.to_dict()['parentReference']['path'] +'/' + item.to_dict()['name']).encode('utf-8').replace('/drive/root:', '')
 
 
+def dict_merge(a, b):
+    c = a.copy()
+    c.update(b)
+    return c
+
 if __name__=='__main__':
     pass

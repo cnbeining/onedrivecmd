@@ -24,23 +24,21 @@ def main():
     Parse arguments,
     Call the right action.
     """
-    global VER, redirect_uri, client_secret, client_id, api_base_url, scopes
-    
-    http_provider = onedrivesdk.HttpProvider()
-    auth_provider = onedrivesdk.AuthProvider(
-        http_provider=http_provider,
-        client_id=client_id,
-        scopes=scopes)
-    
-    client = onedrivesdk.OneDriveClient(api_base_url, auth_provider, http_provider)
     
     ## parse arguments
     args = parse_args()
     
+    # mock client
+    http_provider = onedrivesdk.HttpProvider()
+    auth_provider = onedrivesdk.AuthProvider
+    
+    client = onedrivesdk.OneDriveClient
+
     ## Call action
     # Init
     if args.mode == 'init':
-        client = do_init(client)
+        client = do_init(client, args)
+        print(client)
         save_session(client, path = args.conf)
         return
     

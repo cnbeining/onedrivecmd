@@ -34,6 +34,7 @@ def parse_args():
     
     sync: TODO
     
+    remote: remote download a link to drive
     """
 
     ## Parser Init
@@ -51,7 +52,7 @@ def parse_args():
 
     # Set the config file location
     parser.add_argument('-conf',
-                        default = '~/onedrive.pickle',
+                        default = './onedrive.json',
                         help = 'Set the location of config file')
 
     # Whether Force hard delete or overwrite, default if False

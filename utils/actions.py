@@ -9,23 +9,48 @@ from static import *
 from uploader import *
 from helper_file import *
 from helper_item import *
-from session import * 
+from session import *
+import onedrivesdk
+from onedrivesdk.helpers.resource_discovery import ResourceDiscoveryRequest
+
 
 ### Action
-def do_init(client):
+
+##Init
+def init_business(client):
     """onedrivesdk.request.one_drive_client.OneDriveClient->onedrivesdk.request.one_drive_client.OneDriveClient
+    
+    Important: Only used for Business/Office 365! 
     
     Init of the script.
     
     Let user login, get the details, save the details in a conf file.
     
     Used at the first time login.
+    
+    Ref:
+    https://github.com/OneDrive/onedrive-sdk-python#onedrive-for-business
+    https://dev.onedrive.com/auth/aad_oauth.htm#register-your-app-with-azure-active-directory
     """
-    global VER, redirect_uri, client_secret, client_id, api_base_url, scopes
+    # auth url:
+    # https://login.microsoftonline.com/common/oauth2/authorize?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=bac72a8b-77c8-4b76-8b8f-b7c65a239ce6
 
-    auth_url = client.auth_provider.get_auth_url(redirect_uri)
+    http = onedrivesdk.HttpProvider()
+    auth = onedrivesdk.AuthProvider(http,
+                                    client_id_business ,
+                                    auth_server_url=auth_server_url,
+                                    auth_token_url=auth_token_url)
+    auth_url = auth.get_auth_url(redirect_uri)
 
+    # now the url looks like "('https://login.microsoftonline.com/common/oauth2/authorize',)?redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=bac72a8b-77c8-4b76-8b8f-b7c65a239ce6"
+    
+    auth_url = auth_url.encode('utf-8').replace( "('", '').replace("',)", '')
+    
     # Ask for the code
+    print('ATTENTION: This is for Onedrive Business and Office 365 only.')
+    print('If you are using normal Onedrive, lease exit and run')
+    print('')
+    print('onedrivecmd init')
     print('')
     print(auth_url)
     print('')
@@ -34,11 +59,79 @@ def do_init(client):
 
     code = input('Paste code here: ')
 
-    client.auth_provider.authenticate(code, redirect_uri, client_secret)
+    auth.authenticate(code, redirect_uri, client_secret_business, resource='https://api.office.com/discovery/')
+
+    # this step is slow
+    service_info = ResourceDiscoveryRequest().get_service_info(auth.access_token)[0]
+
+    auth.redeem_refresh_token(service_info.service_resource_id)
+
+    client = onedrivesdk.OneDriveClient(service_info.service_resource_id + '_api/v2.0/', auth, http)
+
+    #print(client)
 
     return client
 
 
+def init_normal(client):
+    """onedrivesdk.request.one_drive_client.OneDriveClient->onedrivesdk.request.one_drive_client.OneDriveClient
+    
+    Important: Used for normal Onedrive account, NOT office 365!
+    
+    Init of the script.
+    
+    Let user login, get the details, save the details in a conf file.
+    
+    Used at the first time login.
+    """
+    
+    http_provider = onedrivesdk.HttpProvider()
+    auth_provider = onedrivesdk.AuthProvider(
+        http_provider=http_provider,
+        client_id=client_id_normal,
+        scopes=scopes)
+    
+    client = onedrivesdk.OneDriveClient(api_base_url, auth_provider, http_provider)
+    
+    auth_url = client.auth_provider.get_auth_url(redirect_uri)
+
+    # Ask for the code
+    print('ATTENTION: This is for normal Onedrive only.')
+    print('If you are using Onedrive Business and Office 365,')
+    print('Please exit and run')
+    print('')
+    print('onedrivecmd init business')
+    print('')
+    print(auth_url)
+    print('')
+    print('Paste this URL into your browser, approve the app\'s access.')
+    print('Copy all the code in the new window, and paste it below:')
+
+    code = input('Paste code here: ')
+
+    client.auth_provider.authenticate(code, redirect_uri, client_secret_normal)
+
+    return client
+
+
+def do_init(client, args):
+    """onedrivesdk.request.one_drive_client.OneDriveClient, args->onedrivesdk.request.one_drive_client.OneDriveClient
+    
+    Init of the script.
+    
+    Let user login, get the details
+    
+    Used at the first time login.
+    """
+    if len(args.rest) > 0:
+        client = init_business(client)
+    else:
+        client = init_normal(client)
+
+    return client
+
+
+## Others
 def do_get(client, args):
     """OneDriveClient, [str] -> OneDriveClient
     
