@@ -136,8 +136,8 @@ def do_get(client, args):
     """OneDriveClient, [str] -> OneDriveClient
     
     Get a remote files information,
-    then putput the link,
-    or download it via the SDK's download method,
+    then get the temp download link that is only vaild for a couple of minutes,
+    download it with a homebrew single-thread downloader with progress bar,
     or call aria2 to do the download.
     """
     
@@ -165,6 +165,7 @@ def do_get(client, args):
         # if hack, use aria2
         if args.hack:
             # the link still requires login
+            # No it does not require!
             #token = get_access_token(client)
             #header = 'Authorization: bearer {access_token}'.format(access_token = token)
             cmd = 'aria2c -c -o "{local_name}" -s16 -x16 -k1M "{remote_link}"'
@@ -172,15 +173,33 @@ def do_get(client, args):
                              remote_link = item_info[0], )
             #                 header = header)
             execute_cmd(cmd)
-            break
-
-        # if directly download, use the build in download() method
-        # this method does not have any verbose so good luck with your
-        # life downloading large files.
-        # It would not be so miserble since OneDrive solely support filesize
-        # as huge as 10GiB, and 2GiB for Business accounts. Yay!
-        logging.info('Downloading {local_name}'.format(local_name = local_name))
-        client.item(drive='me', id=item.id).download('./' + local_name)
+        
+        else:
+            # If called directly, we use our own download
+            # with progress bar.
+            # This should be better than the built-in one
+            # since that one does not comes with any bar, not even a callback point.
+            # From http://stackoverflow.com/a/20943461/2946714
+            # This is slower then I thought.
+            r = requests.get(item_info[0], stream=True)
+    
+            total_length = int(r.headers.get('content-length'))
+    
+            # this will affect the download speed, but too large will result in progress bar update frequency too low
+            chunk_size=1048576
+    
+            # Bar init
+            bar = Bar('Downloading', max = total_length / chunk_size, suffix = '%(percent).1f%% - %(eta)ds')
+    
+            # Save file as chunk, upload Bar as chunk written
+            with open(local_name, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=chunk_size): 
+                    if chunk:
+                        f.write(chunk)
+                        f.flush()
+                        bar.next()
+    
+                bar.finish()
 
     return client
 
@@ -259,7 +278,8 @@ def do_put(client, args):
     
     for i in from_list:
         # SDK one
-        if not args.hack:
+        # ONLY USED WITH HACK
+        if args.hack:
             client.item(drive="me", path=target_dir).upload_async(i)
             break
 
@@ -268,7 +288,7 @@ def do_put(client, args):
             upload_self(token = get_access_token(client),
                         source_file = i,
                         dest_path = target_dir,
-                        chunksize= int(args.chunk))
+                        chunksize = int(args.chunk))
 
     return client
 
@@ -356,6 +376,8 @@ def do_remote(client, args):
     
     A link will be shown to get the current state of uploading.
     
+    This is ONLY vaild for PERSONAL!
+    
     args.rest: list of remote URLs.
     """
     for i in args.rest:
@@ -381,3 +403,14 @@ if __name__=='__main__':
     pass
 
 
+"""
+The old do_get
+
+        # if directly download, use the build in download() method
+        # this method does not have any verbose so good luck with your
+        # life downloading large files.
+        # It would not be so miserble since OneDrive solely support filesize
+        # as huge as 10GiB, and 2GiB for Business accounts. Yay!
+        logging.info('Downloading {local_name}'.format(local_name = local_name))
+        client.item(drive='me', id=item.id).download('./' + local_name)
+"""

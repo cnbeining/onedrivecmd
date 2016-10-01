@@ -41,10 +41,13 @@ def upload_self(token = '', source_file = '', dest_path = '', chunksize = 102476
     
     Upload a file via the API, instead of the SDK.
     
+    Ref: https://dev.onedrive.com/items/upload_post.htm
     """
     ## get upload URL
     if not dest_path.endswith('/'):
         dest_path += '/'
+    
+    # Prepare API call
     dest_path = path_to_remote_path(dest_path) + path_to_name(source_file)
     info_json = json.dumps({'item': {'@name.conflictBehavior': 'rename', 'name': path_to_name(source_file)}})
 
@@ -55,7 +58,7 @@ def upload_self(token = '', source_file = '', dest_path = '', chunksize = 102476
                         headers = {'Authorization': 'bearer {access_token}'.format(access_token = token),
                                    'content-type': 'application/json'})
     uploadUrl = req.json()['uploadUrl'].encode('utf-8')
-    
+
     # filesize cannot > 10GiB
     file_size = os.path.getsize(source_file)
 
@@ -68,7 +71,7 @@ def upload_self(token = '', source_file = '', dest_path = '', chunksize = 102476
                         range_this=i, file_size= file_size)
         bar.next()
     bar.finish()
-    
+
     return True
 
 if __name__=='__main__':

@@ -69,5 +69,6 @@ def main():
     elif args.mode == 'remote':
         do_remote(client, args)
 
+
 if __name__=='__main__':
     main()

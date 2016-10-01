@@ -7,12 +7,16 @@
 
 global VER, redirect_uri, client_secret, client_id, api_base_url, scopes, discovery_uri, auth_server_url, auth_token_url
 
-VER = 'OnedriveCMD V0.0.2'
+VER = 'OnedriveCMD V0.0.3'
 
+
+# If you are not sure whether this is safe,
+# you can register your own APP and use your own URL.
+# Don't just change it: you will have error.
+redirect_uri = 'https://od.cnbeining.com'
 
 
 ## Normal 
-redirect_uri = 'https://od.cnbeining.com'
 client_secret_normal = 'RQdGA24FctsiBGuP8v3juea'
 client_id_normal ='aeba6391-92fd-437d-a9d9-33a258b96c4e'
 api_base_url='https://api.onedrive.com/v1.0/'

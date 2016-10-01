@@ -8,6 +8,7 @@ import sys
 import onedrivesdk
 from helper_file import *
 
+
 ### Helper functions
 
 ## item related
@@ -51,18 +52,20 @@ def get_item_temp_download_info(item):
     Get the direct download link of a file item so
     we can use tools like aria2 or make our own download.
     
-    This link is only vaild for a few minutes,
-    and REQUIRE AUTHORIZATION!
+    This link is only vaild for a few minutes.
     
     Return:
     
-    (URL, file_size, sha1)
+    (URL, file_size)
+    
+    We cannot return a hash since only personal has SHA1,
+    sometimes only quickXorHash. 
     
     """
     file_info = item.to_dict()
     return (file_info['@content.downloadUrl'].encode('utf-8'),
-            file_info['size'],
-            file_info['file']['hashes']['sha1Hash'].encode('utf-8'))
+            file_info['size'], )
+            #file_info['file']['hashes']['sha1Hash'].encode('utf-8'))
 
 
 def get_bare_item_by_path(client, path = ''):

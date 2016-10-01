@@ -17,10 +17,10 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
   - Configuration file (./onedrive.json)
   - Individual file put and get operations
   - List operation (shows filesize and timestamp)
-  - Download and upload progress bar(partial)
+  - Download and upload with native progress bar (with option of downloading with aria2!)
   - Remote download links to your drive(NEW! Not even available via Web console) (Only available at personal due to API limit)
   - Supports Office 365!
-  - Python 2 and 3 compatible(should be!)
+  - Python 2 and 3 compatible(should be! Please report if it is not)
 
 ### Usage
     Usage ./onedrivecmd.py:
@@ -36,9 +36,9 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
         
 
 
-      -conf="~/onedrive.pickle": Config file path, this file is as important as your password!
+      -conf="~/onedrive.json": Config file path, this file is as important as your password!
       -h: Help
-      -hack: Use aria2 to download file, or a home-brew uploader that comes with progress bar
+      -hack: Use aria2 to download file, or the SDK's built-in uploader (without progress bar!)
       -recursive=false: Recursive listing
       -chunk=10485760: Chunk size when uploading
       -url=False: Only display the URL when downloading
@@ -59,7 +59,7 @@ Do a ```pip install -r requirements.txt``` at the folder.
 
 #### Login
 
-Do a ```onedrivecmd.py init``` .
+Do a ```onedrivecmd.py init``` , or ```onedrivecmd.py init business``` if you are using Business or Office 365.
 
 You shall be given a URL like
 
@@ -109,9 +109,12 @@ The delete can only move the item to the trash bin, as there is no way of just d
     od:/1.png	342677	2016-09-24T04:28:51.617000Z
     od:/OneDrive 入门.pdf	1159342	2016-08-23T03:03:55.043000Z
 
-    $ python onedrivecmd.py -hack put /Users/Beining/Documents/1.png od:/
+    $ python onedrivecmd.py put /Users/Beining/Documents/1.png od:/
     Uploading |################################| 100.0% - 0s
 
+
+    $ python onedrivecmd.py get od:/1.pdf
+    Downloading |######                          | 21.4% - 74s
 
     $ python onedrivecmd.py -hack get od:/1.png
     [#e257f9 16KiB/334KiB(4%) CN:1 DL:230KiB ETA:1s]                                                                                                                            
@@ -124,8 +127,6 @@ The delete can only move the item to the trash bin, as there is no way of just d
     
     Status Legend:
     (OK):download completed.
-    
-    With this way you can have progress bar.
 
     $ python onedrivecmd.py mkdir od:/145
 

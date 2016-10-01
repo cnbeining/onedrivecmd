@@ -40,47 +40,6 @@ def refresh_token(client):
     return
 
 
-# def save_session(client, path = ''):
-    # """OneDriveClient, str->None
-    
-    # Save the session info in a pickle file.
-    
-    # Not safe, but whatever.
-    # """
-    # client.auth_provider.save_session(path = path)
-    # return
-
-
-# def load_session(client, path = ''):
-    # """str->OneDriveClient
-    
-    # Determine whether the session is a normal or Business one,
-    # load a session from the storaged pickle,
-    # then refresh so the session is available to use immediately.
-    # """
-    # if not os.path.isfile(path):
-        # logging.error('Session dump path does not exist')
-        # raise Exception
-    
-    # # look inside the pickle to determine whether is normal or Business
-    # session_standalone =onedrivesdk.auth_provider.Session.load_session(path = path)
-    
-    # if session_standalone.auth_server_url == 'https://login.microsoftonline.com/common/oauth2/token':
-        # # Business
-            # http = onedrivesdk.HttpProvider()
-            # auth = onedrivesdk.AuthProvider(http,
-                                            # client_id_business ,
-                                            # auth_server_url=auth_server_url,
-                                            # auth_token_url=auth_token_url)
-
-    # client.auth_provider.load_session(path = path)
-    
-    # # refresh token so session good to use immediately
-    # client.auth_provider.refresh_token()
-
-    # return client
-
-
 ## Make our own even worse Session
 
 
@@ -90,8 +49,14 @@ def save_session(client, path = ''):
     Save the current status to a JSON file
     
     so can be loaded later on to resume the
-    
     current status.
+    
+    Compared to pickle,
+    save whether the client is Business or personal account,
+    and if Business, save its API endpoint
+    so we can save 1 API call to retrive the endpoint.
+    
+    The session JSON file is as important as the user's password.
     """
     if client.base_url == 'https://api.onedrive.com/v1.0/':
         # Normal
@@ -106,7 +71,7 @@ def save_session(client, path = ''):
         status_dict['client.auth_provider._session'] = dict_merge(client.auth_provider._session.__dict__,
                                                                   {'_expires_at': int(client.auth_provider._session._expires_at),
                                                                    'scope_string': ' '.join([i.encode('utf-8') for i in client.auth_provider._session.scope]),
-                                                                   })        
+                                                                   })
 
     else:
         # Business/office 365
@@ -148,10 +113,10 @@ def load_session(client, path = ''):
                                                          status_dict['client.auth_provider._session']['redirect_uri'], 
                                                          refresh_token=status_dict['client.auth_provider._session']['refresh_token'], 
                                                          client_secret=status_dict['client.auth_provider._session']['client_secret'])
-    
+
     with open(path, 'r') as session_file:
         status_dict = json.loads(session_file.read())
-    
+
     if status_dict['is_business']:
         # mock http and auth
         http_provider = onedrivesdk.HttpProvider()
@@ -175,7 +140,56 @@ def load_session(client, path = ''):
 
     # put API endpoint in
     return  onedrivesdk.OneDriveClient(status_dict['client.base_url'], auth_provider, http_provider)
-    
+
 
 if __name__=='__main__':
     pass
+
+
+'''
+
+The old way that save the whole session in a pickle file.
+
+Replaced by saving more information in JSON
+in order to know whether is Business account and its API endpoint.
+
+# def save_session(client, path = ''):
+    # """OneDriveClient, str->None
+    
+    # Save the session info in a pickle file.
+    
+    # Not safe, but whatever.
+    # """
+    # client.auth_provider.save_session(path = path)
+    # return
+
+
+# def load_session(client, path = ''):
+    # """str->OneDriveClient
+    
+    # Determine whether the session is a normal or Business one,
+    # load a session from the storaged pickle,
+    # then refresh so the session is available to use immediately.
+    # """
+    # if not os.path.isfile(path):
+        # logging.error('Session dump path does not exist')
+        # raise Exception
+    
+    # # look inside the pickle to determine whether is normal or Business
+    # session_standalone =onedrivesdk.auth_provider.Session.load_session(path = path)
+    
+    # if session_standalone.auth_server_url == 'https://login.microsoftonline.com/common/oauth2/token':
+        # # Business
+            # http = onedrivesdk.HttpProvider()
+            # auth = onedrivesdk.AuthProvider(http,
+                                            # client_id_business ,
+                                            # auth_server_url=auth_server_url,
+                                            # auth_token_url=auth_token_url)
+
+    # client.auth_provider.load_session(path = path)
+    
+    # # refresh token so session good to use immediately
+    # client.auth_provider.refresh_token()
+
+    # return client
+'''
