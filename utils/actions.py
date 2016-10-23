@@ -399,6 +399,41 @@ def do_remote(client, args):
 
     return client
 
+def do_quota(client, args):
+    """OneDriveClient, [str] -> OneDriveClient
+    
+    Check the quota of the drive and print the data.
+    
+    A link will be shown to get the current state of uploading.
+    
+    Details of the states:
+    https://dev.onedrive.com/facets/quotainfo_facet.htm
+    
+    WARNING:
+    At least for Business account,
+    "used" is not returned, UNLIKE stated in the documentation!
+    """
+    req = requests.get(client.base_url + 'drive/',
+                       headers = {'Authorization': 'bearer {access_token}'.format(access_token = get_access_token(client)),
+                                  'content-type': 'application/json'})
+
+    print('''
+    Total Size: {total},
+    Used: {used},
+    Remaining: {remaining},
+    Deleted: {deleted},
+    
+    Your state is: {state}
+    '''.format(total = sizeof_fmt(req.json()['quota']['total']),
+               used = sizeof_fmt(req.json()['quota']['total'] - req.json()['quota']['remaining']), 
+               remaining = sizeof_fmt(req.json()['quota']['remaining']),
+               deleted = sizeof_fmt(req.json()['quota']['deleted']),
+               state = req.json()['quota']['state']
+               )
+       )
+
+    return client
+
 
 if __name__=='__main__':
     pass

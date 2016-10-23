@@ -57,8 +57,7 @@ def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '',
                         data= info_json,
                         headers = {'Authorization': 'bearer {access_token}'.format(access_token = token),
                                    'content-type': 'application/json'})
-    print(api_base_url)
-    print(req.json())
+
     uploadUrl = req.json()['uploadUrl'].encode('utf-8')
 
     # filesize cannot > 10GiB

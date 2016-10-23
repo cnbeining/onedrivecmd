@@ -88,5 +88,19 @@ def dict_merge(a, b):
     c.update(b)
     return c
 
+def sizeof_fmt(num, suffix='B'):
+    '''int, str->str
+    
+    Format file size as human readable.
+    
+    From:
+    https://web.archive.org/web/20111010015624/http://blogmag.net/blog/read/38/Print_human_readable_file_size
+    '''
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+
 if __name__=='__main__':
     pass

@@ -38,7 +38,7 @@ def main():
     # Init
     if args.mode == 'init':
         client = do_init(client, args)
-        print(client)
+        logging.INFO('Loged in, saving information...')
         save_session(client, path = args.conf)
         return
     
@@ -69,6 +69,8 @@ def main():
     elif args.mode == 'remote':
         do_remote(client, args)
 
+    elif args.mode == 'quota':
+        do_quota(client, args)
 
 if __name__=='__main__':
     main()

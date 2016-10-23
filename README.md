@@ -33,6 +33,7 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
         onedrivecmd.py [OPTIONS] delete od:/foo/bar
         onedrivecmd.py [OPTIONS] mkdir od:/foo/bar/
         onedrivecmd.py [OPTIONS] remote http://thecatapi.com/api/images/get?format=src&type=gif
+        onedrivecmd.py [OPTIONS] quota
         
 
 
@@ -132,6 +133,15 @@ The delete can only move the item to the trash bin, as there is no way of just d
 
     $ python onedrivecmd.py remote "http://wscont2.apps.microsoft.com/winstore/1x/.../Screenshot.225037.100000.jpg"
     https://api.onedrive.com/v1.0/monitor/...
+
+    python onedrivecmd.py -conf="./onedrive.json" quota
+    
+    Total Size: 1.0TiB,
+    Used: 1.6MiB,
+    Remaining: 1024.0GiB,
+    Deleted: 0.0B,
+    
+    Your state is: normal
 
 ### TODO
 
