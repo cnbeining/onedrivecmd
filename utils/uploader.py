@@ -36,7 +36,7 @@ def upload_one_piece(uploadUrl = '', token = '', source_file = '', range_this = 
 
     return req.status_code
 
-def upload_self(token = '', source_file = '', dest_path = '', chunksize = 10247680):
+def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '', chunksize = 10247680):
     """str, str, str, int, int->Bool
     
     Upload a file via the API, instead of the SDK.
@@ -57,6 +57,8 @@ def upload_self(token = '', source_file = '', dest_path = '', chunksize = 102476
                         data= info_json,
                         headers = {'Authorization': 'bearer {access_token}'.format(access_token = token),
                                    'content-type': 'application/json'})
+    print(api_base_url)
+    print(req.json())
     uploadUrl = req.json()['uploadUrl'].encode('utf-8')
 
     # filesize cannot > 10GiB
