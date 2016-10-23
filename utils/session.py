@@ -102,7 +102,8 @@ def load_session(client, path = ''):
     
     Load a new client from the saved status file.
     """
-    
+    ## helper: making a Session from dict we get from session file
+    # main entrance of function to come after this function
     def make_session_from_dict(status_dict):
         return onedrivesdk.auth_provider.Session(status_dict['client.auth_provider._session']['token_type'], 
                                                          status_dict['client.auth_provider._session']['_expires_at'] - time(), 
@@ -114,9 +115,19 @@ def load_session(client, path = ''):
                                                          refresh_token=status_dict['client.auth_provider._session']['refresh_token'], 
                                                          client_secret=status_dict['client.auth_provider._session']['client_secret'])
 
-    with open(path, 'r') as session_file:
-        status_dict = json.loads(session_file.read())
+    ## start of function
+    ## Read Session file
+    try:
+        with open(path, 'r') as session_file:
+            status_dict = json.loads(session_file.read())
+    except IOError as e:
+        # file not exist or some other problems...
+        logging.fatal(e.strerror)
+        logging.fatal('Cannot read the session file!')
+        exit()  #have to die now, or what else can we do?
 
+    ## deterime type of account, run different logics
+    # Business
     if status_dict['is_business']:
         # mock http and auth
         http_provider = onedrivesdk.HttpProvider()
@@ -133,12 +144,12 @@ def load_session(client, path = ''):
             client_id=status_dict['client_id'],
             scopes=scopes)
 
-    # inject a Session in
+    ## inject a Session in
     auth_provider._session = make_session_from_dict(status_dict)
     
     auth_provider.refresh_token()
 
-    # put API endpoint in
+    ## put API endpoint in
     return  onedrivesdk.OneDriveClient(status_dict['client.base_url'], auth_provider, http_provider)
 
 
