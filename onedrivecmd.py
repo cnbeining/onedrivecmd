@@ -38,10 +38,13 @@ def main():
     # Init
     if args.mode == 'init':
         client = do_init(client, args)
-        logging.INFO('Loged in, saving information...')
+
+        # We assume that the init is successful
+        print('Loged in, saving information...')
+
         save_session(client, path = args.conf)
         return
-    
+
     ## Load session
     # If the mode is not init, there has to be a working session
     # located at the conf path. 
