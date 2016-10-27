@@ -249,8 +249,8 @@ def do_list(client, args):
             try:
                 created_date_time = i.created_date_time.strftime(i.DATETIME_FORMAT)
             except ValueError as e:
-                created_date_time = i.created_date_time
-    
+                created_date_time = i._prop_dict["createdDateTime"]
+
             print('{name}\t{size}\t{created_date_time}'.format(name = name,
                                                                size = i.size,
                                                                created_date_time = created_date_time))
