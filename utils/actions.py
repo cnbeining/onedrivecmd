@@ -243,9 +243,17 @@ def do_list(client, args):
                     do_list(client, [get_remote_path_by_item(i)])
 
             # format as megacmd
+            
+            # for some machines a time data does not not match error will be raised
+            # for whatever reason so I just put a whatever patch here
+            try:
+                created_date_time = i.created_date_time.strftime(i.DATETIME_FORMAT)
+            except ValueError as e:
+                created_date_time = i.created_date_time
+    
             print('{name}\t{size}\t{created_date_time}'.format(name = name,
                                                                size = i.size,
-                                                               created_date_time = i.created_date_time.strftime(i.DATETIME_FORMAT)))
+                                                               created_date_time = created_date_time))
 
     return client
 
