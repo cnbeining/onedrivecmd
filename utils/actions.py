@@ -4,12 +4,25 @@
 # Purpose: Actions of onedrivecmd
 # Created: 09/24/2016
 
+from __future__ import unicode_literals
+
 import logging
-from static import * 
-from uploader import *
-from helper_file import *
-from helper_item import *
-from session import *
+
+from utils import convert_utf8_dict_to_dict
+
+try:
+    from static import *
+    from uploader import *
+    from helper_file import *
+    from helper_item import *
+    from session import *
+except ImportError:
+    from .static import *
+    from .uploader import *
+    from .helper_file import *
+    from .helper_item import *
+    from .session import *
+
 import onedrivesdk
 from onedrivesdk.helpers.resource_discovery import ResourceDiscoveryRequest
 
@@ -37,15 +50,18 @@ def init_business(client):
 
     http = onedrivesdk.HttpProvider()
     auth = onedrivesdk.AuthProvider(http,
-                                    client_id_business ,
+                                    client_id_business,
                                     auth_server_url=auth_server_url,
                                     auth_token_url=auth_token_url)
     auth_url = auth.get_auth_url(redirect_uri)
 
     # now the url looks like "('https://login.microsoftonline.com/common/oauth2/authorize',)?redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=bac72a8b-77c8-4b76-8b8f-b7c65a239ce6"
-    
-    auth_url = auth_url.encode('utf-8').replace( "('", '').replace("',)", '')
-    
+
+    try: # Python 2
+        auth_url = auth_url.encode('utf-8').replace("('", '').replace("',)", '')
+    except TypeError:
+        auth_url = auth_url.replace("('", '').replace("',)", '')
+
     # Ask for the code
     print('ATTENTION: This is for Onedrive Business and Office 365 only.')
     print('If you are using normal Onedrive, lease exit and run')
@@ -186,7 +202,7 @@ def do_get(client, args):
             total_length = int(r.headers.get('content-length'))
     
             # this will affect the download speed, but too large will result in progress bar update frequency too low
-            chunk_size=1048576
+            chunk_size = 1048576
     
             # Bar init
             bar = Bar('Downloading', max = total_length / chunk_size, suffix = '%(percent).1f%% - %(eta)ds')
@@ -233,7 +249,7 @@ def do_list(client, args):
         folder = get_remote_item(client, path = path_to_remote_path(path))
 
         for i in folder:
-            name = 'od:/' + i.name.encode('utf-8')
+            name = 'od:/' + i.name
             if i.folder:
                 # make a little difference so the user can notice
                 name += '/'
@@ -301,6 +317,7 @@ def do_put(client, args):
 
     return client
 
+
 def do_delete(client, args):
     """OneDriveClient, [str] -> OneDriveClient
     
@@ -322,6 +339,7 @@ def do_delete(client, args):
 
     return client
 
+
 def do_mkdir(client, args):
     """OneDriveClient, [str] -> OneDriveClient
     
@@ -329,21 +347,43 @@ def do_mkdir(client, args):
     
     This is NOT a recursive one: the father folder must exist.
 
-    Nice and easy.
+    The SDK somehow refuse to work. Have to use API.
     """
     for folder_path in args.rest:
+        if folder_path.startswith('od:'):
+            folder_path = folder_path[3:]
 
         # make sure we are making the right folder
         if folder_path.endswith('/'):
             folder_path = folder_path[:-1]
 
-        f = onedrivesdk.Folder()
-        i = onedrivesdk.Item()
+        parent_path = os.path.dirname(folder_path)
 
-        i.name = path_to_name(folder_path)
-        i.folder = f
+        req = requests.get(client.base_url + '/drive/root:{parent_path}'.format(parent_path = parent_path),
+                           headers = {'Authorization': 'bearer {access_token}'.format(
+                                access_token = get_access_token(client)),
+                                       'Content-Type': 'application/json',
+                                       'Prefer': 'respond-async', })
 
-        client.item(drive='me', path=path_to_remote_path(folder_path)).children.add(i)
+        req = convert_utf8_dict_to_dict(req.json())
+        parent_id = req['id']
+
+        data = {
+            "name": path_to_name(folder_path),
+            "folder": {}
+        }
+
+        req = requests.post(client.base_url + '/drive/items/{parent_id}/children'.format(parent_id = parent_id),
+                            headers = {'Authorization': 'bearer {access_token}'.format(
+                               access_token = get_access_token(client)),
+                               'Content-Type': 'application/json',
+                               'Prefer': 'respond-async', },
+                            json = data)
+
+        req = convert_utf8_dict_to_dict(req.json())
+
+        if not req['name']:
+            print('ERROR: Cannot create {folder_path}'.format(folder_path = folder_path))
 
     return client
 
@@ -390,14 +430,14 @@ def do_remote(client, args):
     args.rest: list of remote URLs.
     """
     for i in args.rest:
-        # There is no gurantee that this shall be normal, JUST like
+        # There is no guarantee that this shall be normal, JUST like
         # all the similar services
         json_data = {'@content.sourceUrl': i, 'file': {}, 'name': path_to_name(i)}
 
         root = client.item(drive='me', id='root').get()
         parent_id = root.id
         
-        req = requests.post(api_base_url + 'drive/items/{parent_id}/children'.format(parent_id = parent_id),
+        req = requests.post(client.base_url + 'drive/items/{parent_id}/children'.format(parent_id = parent_id),
                             data = json.dumps(json_data),
                             headers = {'Authorization': 'bearer {access_token}'.format(access_token = get_access_token(client)),
                                        'Content-Type': 'application/json',
@@ -406,6 +446,7 @@ def do_remote(client, args):
         print(req.headers['location'])
 
     return client
+
 
 def do_quota(client, args):
     """OneDriveClient, [str] -> OneDriveClient

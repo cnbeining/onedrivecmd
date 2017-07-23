@@ -20,7 +20,7 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
   - Download and upload with native progress bar (with option of downloading with aria2!)
   - Remote download links to your drive(NEW! Not even available via Web console) (Only available at personal due to API limit)
   - Supports Office 365!
-  - Python 2 and 3 compatible(should be! Please report if it is not)
+  - Python 2 and 3 compatible. Tested with lots of cases but please report if it is not working somehow.
 
 ### Usage
     Usage ./onedrivecmd.py:

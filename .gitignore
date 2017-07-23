@@ -90,3 +90,5 @@ ENV/
 
 *.pickle
 *.json
+
+.idea/

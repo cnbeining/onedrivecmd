@@ -4,16 +4,17 @@
 # Purpose: Session helper for onedrivecmd
 # Created: 09/24/2016
 
-import argparse
-
-from static import *
 import onedrivesdk
-from helper_file import * 
 import logging
 import json
-import os
-import pickle
 from time import time
+
+try:
+    from static import *
+    from helper_file import *
+except ImportError:
+    from .static import *
+    from .helper_file import *
 
 ### Session
 
@@ -26,7 +27,7 @@ def get_access_token(client):
     This is just a helper function to assist with self-defined
     downloading and uploading.
     """
-    return client.auth_provider.access_token.encode('utf-8')
+    return str(client.auth_provider.access_token)
 
 
 def refresh_token(client):
@@ -70,7 +71,7 @@ def save_session(client, path = ''):
         }
         status_dict['client.auth_provider._session'] = dict_merge(client.auth_provider._session.__dict__,
                                                                   {'_expires_at': int(client.auth_provider._session._expires_at),
-                                                                   'scope_string': ' '.join([i.encode('utf-8') for i in client.auth_provider._session.scope]),
+                                                                   'scope_string': ' '.join([str(i) for i in client.auth_provider._session.scope]),
                                                                    })
 
     else:
@@ -83,10 +84,10 @@ def save_session(client, path = ''):
             'client.auth_provider.auth_server_url': client.auth_provider.auth_server_url[0],  #'https://login.microsoftonline.com/common/oauth2/authorize'
             'client.auth_provider.scopes': client.auth_provider.scopes,  # empty for business
         }
-        
+
         status_dict['client.auth_provider._session'] = dict_merge(client.auth_provider._session.__dict__,
                                                                   {'_expires_at': int(client.auth_provider._session._expires_at),
-                                                                   'scope_string': ' '.join([i.encode('utf-8') for i in client.auth_provider._session.scope]),
+                                                                   'scope_string': ' '.join([str(i) for i in client.auth_provider._session.scope]),
                                                                    })
 
     status = json.dumps(status_dict)
@@ -110,7 +111,7 @@ def load_session(client, path = ''):
                                                          status_dict['client.auth_provider._session']['scope_string'], 
                                                          status_dict['client.auth_provider._session']['access_token'], 
                                                          status_dict['client.auth_provider._session']['client_id'], 
-                                                         status_dict['client.auth_provider._session']['auth_server_url'], 
+                                                         status_dict['client.auth_provider._session']['auth_server_url'],
                                                          status_dict['client.auth_provider._session']['redirect_uri'], 
                                                          refresh_token=status_dict['client.auth_provider._session']['refresh_token'], 
                                                          client_secret=status_dict['client.auth_provider._session']['client_secret'])
@@ -150,7 +151,7 @@ def load_session(client, path = ''):
     auth_provider.refresh_token()
 
     ## put API endpoint in
-    return  onedrivesdk.OneDriveClient(status_dict['client.base_url'], auth_provider, http_provider)
+    return onedrivesdk.OneDriveClient(status_dict['client.base_url'], auth_provider, http_provider)
 
 
 if __name__=='__main__':

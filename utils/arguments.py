@@ -6,7 +6,10 @@
 
 import argparse
 
-from static import *
+try:
+    from static import *
+except ImportError:
+    from .static import *
 
 ### Arguments
 def parse_args():

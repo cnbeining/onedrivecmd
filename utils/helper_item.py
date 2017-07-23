@@ -6,7 +6,13 @@
 
 import sys
 import onedrivesdk
-from helper_file import *
+
+from utils import convert_utf8_dict_to_dict
+
+try:
+    from helper_file import *
+except ImportError:
+    from .helper_file import *
 
 
 ### Helper functions
@@ -62,8 +68,8 @@ def get_item_temp_download_info(item):
     sometimes only quickXorHash. 
     
     """
-    file_info = item.to_dict()
-    return (file_info['@content.downloadUrl'].encode('utf-8'),
+    file_info = convert_utf8_dict_to_dict(item.to_dict())
+    return (file_info['@content.downloadUrl'],
             file_info['size'], )
             #file_info['file']['hashes']['sha1Hash'].encode('utf-8'))
 
