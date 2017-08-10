@@ -14,35 +14,43 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
 
 ### Features
   - Ability to access files and folders using a path URI
-  - Configuration file (./onedrive.json)
+  - Configuration file (~/.onedrive.json)
   - Individual file put and get operations
   - List operation (shows filesize and timestamp)
   - Download and upload with native progress bar (with option of downloading with aria2!)
   - Remote download links to your drive(NEW! Not even available via Web console) (Only available at personal due to API limit)
   - Supports Office 365!
   - Python 2 and 3 compatible. Tested with lots of cases but please report if it is not working somehow.
+  - Get share link and direct download link!
+
+## Install
+
+As easy as: ```pip install onedrivecmd```!
+
+Also you can clone this project.
 
 ### Usage
-    Usage ./onedrivecmd.py:
+    Usage onedrivecmd:
         onedrivecmd.py -h 
         onedrivecmd.py [OPTIONS] init
-        onedrivecmd.py [OPTIONS] init business
+        onedrivecmd.py [OPTIONS] init_business
         onedrivecmd.py [OPTIONS] list od:/foo/bar/
+        onedrivecmd.py [OPTIONS] share od:/foo/bar/
+        onedrivecmd.py [OPTIONS] direct od:/foo/bar/
         onedrivecmd.py [OPTIONS] get od:/foo/file.txt /tmp/
         onedrivecmd.py [OPTIONS] put /tmp/hello.txt od:/bar/
         onedrivecmd.py [OPTIONS] delete od:/foo/bar
         onedrivecmd.py [OPTIONS] mkdir od:/foo/bar/
         onedrivecmd.py [OPTIONS] remote http://thecatapi.com/api/images/get?format=src&type=gif
         onedrivecmd.py [OPTIONS] quota
-        
 
 
       -conf="~/onedrive.json": Config file path, this file is as important as your password!
       -h: Help
       -hack: Use aria2 to download file, or the SDK's built-in uploader (without progress bar!)
       -recursive=false: Recursive listing
-      -chunk=10485760: Chunk size when uploading
-      -url=False: Only display the URL when downloading
+      -chunk=62914560: Chunk size when uploading
+      -url=False: Only display the URL when downloading, temp one
 
 
 
@@ -95,29 +103,55 @@ The delete can only move the item to the trash bin, as there is no way of just d
 
 ### Examples
 
-    $ python onedrivecmd.py  init
+    $ onedrivecmd  init
     
     https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e
     
     Paste this URL into your browser, approve the app's access.
     Copy all the code in the new window, and paste it below:
     Paste code here: Ma0d6f772-****-e5ea-8d5a-******    
+    
+    $ onedrivecmd  init_business
+    ATTENTION: This is for Onedrive Business and Office 365 only.
+    If you are using normal Onedrive, lease exit and run
+    
+    onedrivecmd init
+    
+    https://login.microsoftonline.com/common/oauth2/authorize?redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=6fdb55b4-c905-4612-bd23-306c3918217c
+    
+    Paste this URL into your browser, approve the app's access.
+    Copy all the code in the new window, and paste it below:
+    Paste code here: (Very long!)
 
-    $ python onedrivecmd.py list od:/
+    $ onedrivecmd list od:/
     od:/133/	0	2016-09-24T04:17:58.957000Z
     od:/134/	0	2016-09-24T05:11:17.190000Z
     od:/New Folder/	351	2016-09-22T03:02:25.423000Z
     od:/1.png	342677	2016-09-24T04:28:51.617000Z
     od:/OneDrive 入门.pdf	1159342	2016-08-23T03:03:55.043000Z
 
-    $ python onedrivecmd.py put /Users/Beining/Documents/1.png od:/
+    $ onedrivecmd put /Users/Beining/Documents/1.png od:/
     Uploading |################################| 100.0% - 0s
 
 
-    $ python onedrivecmd.py get od:/1.pdf
+    $ onedrivecmd get od:/1.pdf
     Downloading |######                          | 21.4% - 74s
 
-    $ python onedrivecmd.py -hack get od:/1.png
+    # personal
+    $ onedrivecmd share od:/1.png
+    https://1drv.ms/u/s!AnpifX1Elagmb_7sFIiyr2ipY1k
+    
+    $ onedrivecmd direct od:/1.png
+    https://onedrive.live.com/download?resid=26A895447D7D627A!111&authkey=!AP7sFIiyr2ipY1k
+    
+    # Office 365
+    $ onedrivecmd share od:/onedrive.json
+    https://ad-my.sharepoint.com/personal/email/_layouts/15/guestaccess.aspx?docid=xxx&authkey=xxx
+
+    $ onedrivecmd direct od:/onedrive.json
+    https://ad-my.sharepoint.com/personal/email/_layouts/15/download.aspx?docid=md5&authkey=xxx
+
+    $ onedrivecmd -hack get od:/1.png
     [#e257f9 16KiB/334KiB(4%) CN:1 DL:230KiB ETA:1s]                                                                                                                            
     09/24 02:10:56 [NOTICE] Download complete: **onedrivecmd/1.png
     
@@ -129,12 +163,12 @@ The delete can only move the item to the trash bin, as there is no way of just d
     Status Legend:
     (OK):download completed.
 
-    $ python onedrivecmd.py mkdir od:/145
+    $ onedrivecmd mkdir od:/145
 
-    $ python onedrivecmd.py remote "http://wscont2.apps.microsoft.com/winstore/1x/.../Screenshot.225037.100000.jpg"
+    $ onedrivecmd remote "http://wscont2.apps.microsoft.com/winstore/1x/.../Screenshot.225037.100000.jpg"
     https://api.onedrive.com/v1.0/monitor/...
 
-    python onedrivecmd.py -conf="./onedrive.json" quota
+    $ onedrivecmd quota
     
     Total Size: 1.0TiB,
     Used: 1.6MiB,

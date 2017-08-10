@@ -4,10 +4,9 @@
 # Purpose: Helpers for Item operations for onedrivecmd
 # Created: 09/24/2016
 
-import sys
 import onedrivesdk
 
-from utils import convert_utf8_dict_to_dict
+from onedrivecmd.utils import convert_utf8_dict_to_dict
 
 try:
     from helper_file import *
