@@ -19,12 +19,15 @@ except ImportError:
 
 
 ## Upload related
-def upload_one_piece(uploadUrl = '', token = '', source_file = '', range_this = [], file_size = 0):
+def upload_one_piece(uploadUrl = '', token = '', source_file = '', range_this = [], file_size = 0,
+                     requests_session = None):
     """list->int
 
     Post one piece of file to Onedrive via API.
     """
-    # this is how everything calculated
+    if requests_session is None:
+        requests_session = requests.Session()
+        # this is how everything calculated
     content_length = range_this[1] - range_this[0] + 1
 
     file_piece = file_read_seek_len(source_file, range_this[0], content_length)
@@ -41,9 +44,9 @@ def upload_one_piece(uploadUrl = '', token = '', source_file = '', range_this = 
                                                                     total = str(file_size)),
                'Content-Length': str(content_length), }
 
-    req = requests.put(uploadUrl,
-                       data = file_piece,
-                       headers = headers)
+    req = requests_session.put(uploadUrl,
+                               data = file_piece,
+                               headers = headers)
 
     return req.status_code
 
@@ -90,9 +93,12 @@ def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '',
     bar = Bar('Uploading', max = len(range_list), suffix = '%(percent).1f%% - %(eta)ds')
     bar.next()  # nessesery to init the Bar
 
+    # Session reuse when uploading, hopefully will kill some overhead
+    requests_session = requests.Session()
+
     for i in range_list:
         upload_one_piece(uploadUrl = uploadUrl, token = token, source_file = source_file,
-                         range_this = i, file_size = file_size)
+                         range_this = i, file_size = file_size, requests_session = requests_session)
         bar.next()
 
     bar.finish()
