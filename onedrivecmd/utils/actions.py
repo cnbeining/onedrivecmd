@@ -199,7 +199,7 @@ def do_get(client, args):
             total_length = int(r.headers.get('content-length'))
 
             # this will affect the download speed, but too large will result in progress bar update frequency too low
-            chunk_size = 1048576
+            chunk_size = 1048576 * 10
 
             # Bar init
             bar = Bar('Downloading', max = total_length / chunk_size, suffix = '%(percent).1f%% - %(eta)ds')
