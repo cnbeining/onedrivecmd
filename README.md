@@ -16,7 +16,7 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
   - Ability to access files and folders using a path URI
   - Configuration file (~/.onedrive.json)
   - Individual file put and get operations
-  - List operation (shows filesize and timestamp)
+  - List operation (shows file size and timestamp)
   - Download and upload with native progress bar (with option of downloading with aria2!)
   - Remote download links to your drive(NEW! Not even available via Web console) (Only available at personal due to API limit)
   - Supports Office 365!
@@ -31,18 +31,19 @@ Also you can clone this project.
 
 ### Usage
     Usage onedrivecmd:
-        onedrivecmd.py -h 
-        onedrivecmd.py [OPTIONS] init
-        onedrivecmd.py [OPTIONS] init_business
-        onedrivecmd.py [OPTIONS] list od:/foo/bar/
-        onedrivecmd.py [OPTIONS] share od:/foo/bar/
-        onedrivecmd.py [OPTIONS] direct od:/foo/bar/
-        onedrivecmd.py [OPTIONS] get od:/foo/file.txt /tmp/
-        onedrivecmd.py [OPTIONS] put /tmp/hello.txt od:/bar/
-        onedrivecmd.py [OPTIONS] delete od:/foo/bar
-        onedrivecmd.py [OPTIONS] mkdir od:/foo/bar/
-        onedrivecmd.py [OPTIONS] remote http://thecatapi.com/api/images/get?format=src&type=gif
-        onedrivecmd.py [OPTIONS] quota
+        onedrivecmd -h 
+        onedrivecmd [OPTIONS] init
+        onedrivecmd [OPTIONS] init_business
+        onedrivecmd [OPTIONS] list od:/foo/bar/
+        onedrivecmd [OPTIONS] share od:/foo/bar/
+        onedrivecmd [OPTIONS] direct od:/foo/bar/
+        onedrivecmd [OPTIONS] get od:/foo/file.txt /tmp/
+        onedrivecmd [OPTIONS] put /tmp/hello.txt od:/bar/
+        onedrivecmd [OPTIONS] delete od:/foo/bar
+        onedrivecmd [OPTIONS] mkdir od:/foo/bar/
+        onedrivecmd [OPTIONS] search foobar
+        onedrivecmd [OPTIONS] remote http://thecatapi.com/api/images/get?format=src&type=gif
+        onedrivecmd [OPTIONS] quota
 
 
       -conf="~/onedrive.json": Config file path, this file is as important as your password!
@@ -58,6 +59,8 @@ Also you can clone this project.
 
 #### Install dependencies
 
+*Only when you are installing from source code*
+
 There are 3 packages you should install:
 
     onedrivesdk
@@ -68,7 +71,7 @@ Do a ```pip install -r requirements.txt``` at the folder.
 
 #### Login
 
-Do a ```onedrivecmd.py init``` , or ```onedrivecmd.py init business``` if you are using Business or Office 365.
+Do a ```onedrivecmd init``` , or ```onedrivecmd init_business``` if you are using Business or Office 365.
 
 You shall be given a URL like
 
@@ -80,7 +83,7 @@ Authorize your login.
 
 Yes you shall be redirected to ```https://od.cnbeining.com/```, which apparently is owned by me. This page is hosted at [branch gh-pages](https://github.com/cnbeining/onedrivecmd/blob/gh-pages/index.html), with a Cloudflare at the front. I am doing this so you can just do a quick select-all and paste. If you have doubt, change the information in ```static.py```.
 
-The login information is storaged at ```./onedrive.json```, or any location you demanded. This file should be treated as secret as your password.
+The login information is storaged at ```~/.onedrive.json```, or any location you demanded. This file should be treated as secret as your password.
 
 After this very first time init, the ```access_token``` shall be refreshed every time you run the programme.
 
@@ -88,17 +91,17 @@ After this very first time init, the ```access_token``` shall be refreshed every
 ### Pitfalls
 To list directory contents, use:
 
-    $ onedrivecmd.py list od:/foo/bar/
+    $ onedrivecmd list od:/foo/bar/
 
 Names ending with '/' is a directory. The size of directory is the size of the sum of its content.
 
 To recursively list a directory use, -recursive option.
 
-    $ onedrivecmd.py -recursive list od:/foo/bar/
+    $ onedrivecmd -recursive list od:/foo/bar/
 
 The delete can only move the item to the trash bin, as there is no way of just delete the item. Make sure you clean your trash.
 
-    $ onedrivecmd.py delete od:/foo/bar/file
+    $ onedrivecmd delete od:/foo/bar/file
 
 
 ### Examples
@@ -162,6 +165,10 @@ The delete can only move the item to the trash bin, as there is no way of just d
     
     Status Legend:
     (OK):download completed.
+    
+    $ onedrivecmd search file.txt
+    01DERSD4MVUNK66BVQRFFZZEDK7FILJSYS	file.txt	1073741824	2017-08-30T05:55:24Z
+    01DERSD4JFGCT7P2VFFVEI3KXDPASSCX2H	files.txt	89	2017-08-30T05:46:38Z
 
     $ onedrivecmd mkdir od:/145
 

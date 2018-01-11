@@ -71,6 +71,18 @@ def parse_args():
                         default = False,
                         help = 'Recursively listing folder')
 
+    # TODO: asc when listing folder and searching. But by which field?
+    parser.add_argument('-asc',
+                        action = 'store_true',
+                        default = False,
+                        help = 'Recursively listing folder')
+
+    # TODO: desc when listing folder and searching
+    parser.add_argument('-desc',
+                        action = 'store_true',
+                        default = False,
+                        help = 'Recursively listing folder')
+
     # Use downloader to download, or use multi-thread upload(highly exp)
     parser.add_argument('-hack',
                         action = 'store_true',
@@ -94,7 +106,7 @@ def parse_args():
     # Set mutually exclusive actions
     parser.add_argument('mode',
                         choices = ['init_business', 'init', 'get', 'list', 'put', 'delete', 'mkdir', 'move', 'remote',
-                                   'quota', 'share', 'direct'],
+                                   'quota', 'share', 'direct', 'search'],
                         help = """Action to be done.\n
                         init: Use OAuth to setup the programme\n
                         init_business: Use OAuth to setup the programme with Office 365\n
@@ -105,6 +117,7 @@ def parse_args():
                         mkdir: make a folder at remote\n
                         move: move a remote item to a remote location\n
                         remote: download a remote link to drive\n
+                        search: search from your drive
                         share: get the download link of the file/folder\n
                         direct: get the direct download link of the file\n
                         quota: Get the quota of the drive""")

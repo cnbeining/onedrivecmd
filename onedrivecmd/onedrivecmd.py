@@ -84,6 +84,9 @@ def main():
     elif args.mode == 'remote':
         do_remote(client, args)
 
+    elif args.mode == 'search':
+        do_search(client, args)
+
     elif args.mode == 'quota':
         do_quota(client, args)
 

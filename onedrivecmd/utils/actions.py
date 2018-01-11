@@ -6,7 +6,6 @@
 
 from __future__ import unicode_literals
 
-
 try:
     from static import *
     from uploader import *
@@ -267,18 +266,19 @@ def do_direct(client, args):
 
         permission = client.item(id = item.id).create_link("view").post()
 
-        if '15/guestaccess.aspx' in permission.link.web_url: # office 365
+        if '15/guestaccess.aspx' in permission.link.web_url:  # office 365
             # link like:
             # https://xxx-my.sharepoint.com/personal/account_name/_layouts/15/guestaccess.aspx?docid=MD5_like&authkey=xxx
             print(permission.link.web_url.replace('15/guestaccess.aspx', '15/download.aspx'))
 
-        if '1drv.ms' in permission.link.web_url: # personal
+        if '1drv.ms' in permission.link.web_url:  # personal
             # link like: https://1drv.ms/u/s!blahblah
-            req = requests.get(permission.link.web_url,  allow_redirects = False)
+            req = requests.get(permission.link.web_url, allow_redirects = False)
             # link become: https://onedrive.live.com/redir?resid=xxx!111&authkey=!xxx
             print(req.headers['Location'].replace('redir?', 'download?'))
 
     return client
+
 
 def do_list(client, args):
     """OneDriveClient, [str] -> OneDriveClient
@@ -501,8 +501,8 @@ def do_remote(client, args):
                             data = json.dumps(json_data),
                             headers = {'Authorization': 'bearer {access_token}'.format(
                                 access_token = get_access_token(client)),
-                                       'Content-Type': 'application/json',
-                                       'Prefer': 'respond-async', })
+                                'Content-Type': 'application/json',
+                                'Prefer': 'respond-async', })
 
         print(req.headers['location'])
 
@@ -542,6 +542,40 @@ def do_quota(client, args):
                state = req.json()['quota']['state']
                )
           )
+
+    return client
+
+
+def do_search(client, args):
+    """OneDriveClient, [str] -> OneDriveClient
+
+    Search the drive and get list of files.
+
+    A link will be shown to get the current state of uploading.
+
+    Details of the states:
+    https://docs.microsoft.com/en-us/onedrive/developer/rest-api/api/driveitem_search
+    """
+
+
+
+    # reuse session for faster multi page query
+    requests_session = requests.Session()
+
+    search_query = ' '.join(args.rest)
+
+    search_url = client.base_url + "drive//root/search(q='{search_query}')".format(search_query = search_query)
+
+    access_token = get_access_token(client)
+
+    item_list = get_search_item_list_single_page_by_url_rec(requests_session, access_token, search_url, item_list = [])
+
+    for item in item_list:
+        print('{id}\t{name}\t{size}\t{created_date_time}'.format(id = item['id'],
+                                                                 name = item['name'],
+                                                                 size = item['size'],
+                                                                 created_date_time = item['lastModifiedDateTime']
+                                                                 ))
 
     return client
 
