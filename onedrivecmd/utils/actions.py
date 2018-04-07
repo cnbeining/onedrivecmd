@@ -19,9 +19,14 @@ except ImportError:
     from .helper_item import *
     from .session import *
 
+try:
+    from urlparse import urlparse # python 2
+except:
+    from urllib.parse import urlparse
+
 import onedrivesdk
 from onedrivesdk.helpers.resource_discovery import ResourceDiscoveryRequest
-
+from os.path import splitext
 
 ### Action
 
@@ -266,10 +271,23 @@ def do_direct(client, args):
 
         permission = client.item(id = item.id).create_link("view").post()
 
-        if '15/guestaccess.aspx' in permission.link.web_url:  # office 365
+        if 'sharepoint.com' in permission.link.web_url:  # office 365
             # link like:
-            # https://xxx-my.sharepoint.com/personal/account_name/_layouts/15/guestaccess.aspx?docid=MD5_like&authkey=xxx
-            print(permission.link.web_url.replace('15/guestaccess.aspx', '15/download.aspx'))
+            # https://xxx-my.sharepoint.com/:b:/g/personal/xx_xxx_onmicrosoft_com/blah-blah
+            parsed_uri = urlparse(permission.link.web_url)
+            domain = '{uri.scheme}://{uri.netloc}/'.format(uri = parsed_uri) #https://xxx-my.sharepoint.com/
+            resid = str(parsed_uri.path.split('/')[-1]) # blah-blah
+            user_info = str(parsed_uri.path.split('personal/')[1].split('/')[0]) # xxx_xxxxxx_onmicrosoft_com
+
+            # Use the original file extension for the URL
+            extention = str(splitext(item.name)[1])
+
+            direct_link = domain + 'personal/' + user_info + '/_layouts/15/download.aspx?share=' + resid
+            if len(extention[1]) > 0:
+                direct_link += '&ext=' + extention
+
+            print(direct_link)
+            
 
         if '1drv.ms' in permission.link.web_url:  # personal
             # link like: https://1drv.ms/u/s!blahblah
