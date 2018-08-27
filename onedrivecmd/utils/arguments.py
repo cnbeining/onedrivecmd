@@ -101,6 +101,12 @@ def parse_args():
                         choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                         default = 'WARNING',
                         help = 'Set the logging level')
+    
+    # Show full path instead of short one while listing
+    parser.add_argument('-fullpath',
+                        action = 'store_true',
+                        default = False,
+                        help = 'Show full path instead of short one while listing')
 
     ## Script actions
     # Set mutually exclusive actions
