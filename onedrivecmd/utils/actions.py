@@ -333,7 +333,7 @@ def do_list(client, args):
 
                 # handle recursive
                 if is_recursive:
-                    do_list(client, [get_remote_path_by_item(i)])
+                    do_list(client, [get_remote_path_by_item(i) + '/'])
 
             # format as megacmd
 
