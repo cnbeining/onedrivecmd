@@ -298,7 +298,7 @@ def do_direct(client, args):
     return client
 
 
-def do_list(client, args):
+def do_list(client, args, lFolders = None):
     """OneDriveClient, [str] -> OneDriveClient
 
     List the content of a remote folder,
@@ -309,13 +309,14 @@ def do_list(client, args):
     the programme can just...crash. But who cares? I do not own Microsoft.
     """
 
+    is_recursive = args.recursive
+    show_fullpath = args.fullpath
+
     # recursive call
-    if isinstance(args, list):
-        folder_list = args
-        is_recursive = True
+    if isinstance(lFolders, list):
+        folder_list = lFolders
     else:  # first call
         folder_list = args.rest
-        is_recursive = args.recursive
 
     # Nothing provided. Instead of giving a error, list the root folder
     if folder_list == []:
@@ -323,17 +324,22 @@ def do_list(client, args):
 
     for path in folder_list:
         # get the folder entry point
-        folder = get_remote_item(client, path = path_to_remote_path(path))
+        curPath = path_to_remote_path(path)
+        folder = get_remote_item(client, path = curPath)
 
         for i in folder:
-            name = 'od:/' + i.name
+            if show_fullpath:
+                name = 'od:' + curPath + '/' + i.name
+            else:
+                name = 'od:/' + i.name
+
             if i.folder:
                 # make a little difference so the user can notice
                 name += '/'
 
                 # handle recursive
                 if is_recursive:
-                    do_list(client, [get_remote_path_by_item(i) + '/'])
+                    do_list(client, args, [get_remote_path_by_item(i) + '/'])
 
             # format as megacmd
 
