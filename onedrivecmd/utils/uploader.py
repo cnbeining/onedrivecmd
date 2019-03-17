@@ -63,47 +63,61 @@ def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '',
     if not dest_path.endswith('/'):
         dest_path += '/'
 
-    # Prepare API call (note: info_json must be ordered else error 'Annotations must be specified before other elements in a JSON object' will be reported.)
-    dest_path = path_to_remote_path(dest_path) + '/' + path_to_name(source_file)
-    info_json = json.dumps({'item': OrderedDict([('@name.conflictBehavior', 'rename'), ('name', path_to_name(source_file))])})
+    if source_file.endswith('/'):
+        source_file=source_file[:-1]
 
-    api_url = api_base_url + 'drive/root:{dest_path}:/upload.createSession'.format(dest_path = dest_path)
+    # check if it's a file
+    if os.path.isfile(source_file):
+        # Prepare API call (note: info_json must be ordered else error 'Annotations must be specified before other elements in a JSON object' will be reported.)
+        dest_path = path_to_remote_path(dest_path) + '/' + path_to_name(source_file)
+        # Stamps
+        print(" ")
+        os.system("echo [\"$(date +%F\\ %T)\"]")
+        print("\033[36m"+source_file+"\033[0m ==> \033[36mod:"+dest_path+"\033[0m")
 
-    req = requests.post(api_url,
-                        data = info_json,
-                        headers = {'Authorization': 'bearer {access_token}'.format(access_token = token),
-                                   'content-type': 'application/json'})
-
-    if req.status_code > 201:
-        print(req.json()['error']['message'])
-        return False
-
-    req = convert_utf8_dict_to_dict(req.json())
-
-    uploadUrl = req['uploadUrl']
-
-    # filesize cannot > 10GiB
-    file_size = os.path.getsize(source_file)
-
-    # print(file_size)
-
-    range_list = [[i, i + chunksize - 1] for i in range(0, file_size, chunksize)]
-    range_list[-1][-1] = file_size - 1
-
-    # Upload with a progress bar
-    bar = Bar('Uploading', max = len(range_list), suffix = '%(percent).1f%% - %(eta)ds')
-    bar.next()  # nessesery to init the Bar
-
-    # Session reuse when uploading, hopefully will kill some overhead
-    requests_session = requests.Session()
-
-    for i in range_list:
-        upload_one_piece(uploadUrl = uploadUrl, token = token, source_file = source_file,
-                         range_this = i, file_size = file_size, requests_session = requests_session)
-        bar.next()
-
-    bar.finish()
-
+        info_json = json.dumps({'item': OrderedDict([('@name.conflictBehavior', 'rename'), ('name', path_to_name(source_file))])})
+    
+        api_url = api_base_url + 'drive/root:{dest_path}:/upload.createSession'.format(dest_path = dest_path)
+    
+        req = requests.post(api_url,
+                            data = info_json,
+                            headers = {'Authorization': 'bearer {access_token}'.format(access_token = token),
+                                       'content-type': 'application/json'})
+    
+        if req.status_code > 201:
+            print("\033[31mRequest error: "+req.json()['error']['message']+"\033[0m")
+            return False
+    
+        req = convert_utf8_dict_to_dict(req.json())
+    
+        uploadUrl = req['uploadUrl']
+    
+        # filesize cannot > 10GiB
+        file_size = os.path.getsize(source_file)
+    
+        # print(file_size)
+    
+        range_list = [[i, i + chunksize - 1] for i in range(0, file_size, chunksize)]
+        range_list[-1][-1] = file_size - 1
+    
+        # Upload with a progress bar
+        bar = Bar('Uploading', max = len(range_list), suffix = '%(percent).1f%% - %(eta)ds')
+        bar.next()  # nessesery to init the Bar
+    
+        # Session reuse when uploading, hopefully will kill some overhead
+        requests_session = requests.Session()
+    
+        for i in range_list:
+            upload_one_piece(uploadUrl = uploadUrl, token = token, source_file = source_file,
+                             range_this = i, file_size = file_size, requests_session = requests_session)
+            bar.next()
+    
+        bar.finish()
+    # So it's a dir, upload it recursively.
+    else:
+        new_dest_path=dest_path+path_to_name(source_file)+"/"
+        for new_source_file in os.listdir(source_file):
+            upload_self(api_base_url, token, source_file+"/"+new_source_file, new_dest_path, chunksize)
     return True
 
 
