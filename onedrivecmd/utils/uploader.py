@@ -7,6 +7,7 @@
 import json
 from progress.bar import Bar
 import requests
+from collections import OrderedDict
 
 try:
     from static import *
@@ -62,9 +63,9 @@ def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '',
     if not dest_path.endswith('/'):
         dest_path += '/'
 
-    # Prepare API call
+    # Prepare API call (note: info_json must be ordered else error 'Annotations must be specified before other elements in a JSON object' will be reported.)
     dest_path = path_to_remote_path(dest_path) + '/' + path_to_name(source_file)
-    info_json = json.dumps({'item': {'@name.conflictBehavior': 'rename', 'name': path_to_name(source_file)}})
+    info_json = json.dumps({'item': OrderedDict([('@name.conflictBehavior', 'rename'), ('name', path_to_name(source_file))])})
 
     api_url = api_base_url + 'drive/root:{dest_path}:/upload.createSession'.format(dest_path = dest_path)
 
