@@ -40,6 +40,14 @@ def refresh_token(client):
     client.auth_provider.refresh_token()
     return
 
+def token_time_to_live(client):
+    """OneDriveClient->int
+    
+    Get the expiration time of token in sec. 
+    
+    We have to make sure the token is available. 
+    """
+    return int(client.auth_provider._session._expires_at - time())
 
 ## Make our own even worse Session
 
