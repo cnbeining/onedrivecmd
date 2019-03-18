@@ -75,7 +75,7 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
         if token_time_to_live(client) < 50*60:
             refresh_token(client)
 
-        dest_path = path_to_remote_path(dest_path) + '/' + path_to_name(source_file)
+        dest_path = ('' if path_to_remote_path(dest_path)=='/' else path_to_remote_path(dest_path)) + '/' + path_to_name(source_file)
         # Stamps
         print(" ")
         os.system("echo [\"$(date +%F\\ %T)\"]")
@@ -112,12 +112,17 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
     
         # Session reuse when uploading, hopefully will kill some overhead
         requests_session = requests.Session()
-    
         for i in range_list:
-            upload_one_piece(uploadUrl = uploadUrl, token = get_access_token(client), source_file = source_file,
-                             range_this = i, file_size = file_size, requests_session = requests_session)
+            while (True):
+                try:
+                    upload_one_piece(uploadUrl = uploadUrl, token = get_access_token(client), source_file = source_file,
+                                     range_this = i, file_size = file_size, requests_session = requests_session)
+                    break
+                except Exception as e:
+                    print("\n\033[31mAn error occured:\033[0m "+str(e)+" \033[31mwill try again later.\033[0m")
+                    continue
             bar.next()
-    
+
         bar.finish()
     # So it's a dir, upload it recursively.
     else:

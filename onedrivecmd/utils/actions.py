@@ -299,7 +299,7 @@ def do_direct(client, args):
 
 
 def do_list(client, args, lFolders = None):
-    """OneDriveClient, [str] -> OneDriveClient
+    """OneDriveClient, [str], str -> OneDriveClient
 
     List the content of a remote folder,
     with possbility of doing a recurrsive listing.
@@ -331,7 +331,8 @@ def do_list(client, args, lFolders = None):
             if show_fullpath:
                 name = 'od:' + curPath + '/' + i.name
             else:
-                name = 'od:/' + i.name
+                # if name start with 'od:/', users may think it was in the root directory '/'
+                name = 'od:' + i.name
 
             if i.folder:
                 # make a little difference so the user can notice
