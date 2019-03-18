@@ -392,8 +392,7 @@ def do_put(client, args):
 
         # Home brew one, with progress bar
         else:
-            upload_self(api_base_url = client.base_url,
-                        token = get_access_token(client),
+            upload_self(client=client,
                         source_file = i,
                         dest_path = target_dir,
                         chunksize = int(args.chunk))

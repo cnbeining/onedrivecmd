@@ -13,10 +13,12 @@ try:
     from static import *
     from helper_file import *
     from helper_item import *
+    from session import *
 except ImportError:
     from .static import *
     from .helper_file import *
     from .helper_item import *
+    from .session import *
 
 
 ## Upload related
@@ -52,8 +54,8 @@ def upload_one_piece(uploadUrl = '', token = '', source_file = '', range_this = 
     return req.status_code
 
 
-def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '', chunksize = 10247680):
-    """str, str, str, int, int->Bool
+def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
+    """OneDriveClient, str, str, int->Bool
 
     Upload a file via the API, instead of the SDK.
 
@@ -68,7 +70,11 @@ def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '',
 
     # check if it's a file
     if os.path.isfile(source_file):
-        # Prepare API call (note: info_json must be ordered else error 'Annotations must be specified before other elements in a JSON object' will be reported.)
+        # Prepare API call
+        # token expires in 3600s, just refresh it if TTL<50min.
+        if token_time_to_live(client) < 50*60:
+            refresh_token(client)
+
         dest_path = path_to_remote_path(dest_path) + '/' + path_to_name(source_file)
         # Stamps
         print(" ")
@@ -77,15 +83,15 @@ def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '',
 
         info_json = json.dumps({'item': OrderedDict([('@name.conflictBehavior', 'rename'), ('name', path_to_name(source_file))])})
     
-        api_url = api_base_url + 'drive/root:{dest_path}:/upload.createSession'.format(dest_path = dest_path)
+        api_url = client.base_url + 'drive/root:{dest_path}:/upload.createSession'.format(dest_path = dest_path)
     
         req = requests.post(api_url,
                             data = info_json,
-                            headers = {'Authorization': 'bearer {access_token}'.format(access_token = token),
+                            headers = {'Authorization': 'bearer {access_token}'.format(access_token = get_access_token(client)),
                                        'content-type': 'application/json'})
     
         if req.status_code > 201:
-            print("\033[31mRequest error: "+req.json()['error']['message']+"\033[0m")
+            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
             return False
     
         req = convert_utf8_dict_to_dict(req.json())
@@ -108,7 +114,7 @@ def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '',
         requests_session = requests.Session()
     
         for i in range_list:
-            upload_one_piece(uploadUrl = uploadUrl, token = token, source_file = source_file,
+            upload_one_piece(uploadUrl = uploadUrl, token = get_access_token(client), source_file = source_file,
                              range_this = i, file_size = file_size, requests_session = requests_session)
             bar.next()
     
@@ -117,7 +123,7 @@ def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '',
     else:
         new_dest_path=dest_path+path_to_name(source_file)+"/"
         for new_source_file in os.listdir(source_file):
-            upload_self(api_base_url, token, source_file+"/"+new_source_file, new_dest_path, chunksize)
+            upload_self(client, source_file+"/"+new_source_file, new_dest_path, chunksize)
     return True
 
 
