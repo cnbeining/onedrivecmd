@@ -374,7 +374,7 @@ def do_put(client, args):
     # set target dir
     if not args.rest[-1].startswith('od:/'):
         from_list = args.rest
-        target_dir = '/'
+        target_dir = 'od:/'
 
     else:
         from_list = args.rest[:-1]
@@ -388,7 +388,8 @@ def do_put(client, args):
         # SDK one
         # ONLY USED WITH HACK
         if args.hack:
-            client.item(drive = "me", path = target_dir).upload_async(i)
+            # f**k. so many bugs with this, i have to rewrite.
+            client.item(drive = "me", path = target_dir[3:-1]).upload_async(i)
             break
 
         # Home brew one, with progress bar
