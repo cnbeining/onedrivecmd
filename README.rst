@@ -28,7 +28,8 @@ Features
 
 -  Ability to access files and folders using a path URI
 -  Configuration file (~/.onedrive.json)
--  Individual file put and get operations
+-  Individual file get operations
+-  folder/file put operations, and retry when failed (experimental)
 -  List operation (shows file size and timestamp)
 -  Download and upload with native progress bar (with option of
    downloading with aria2!)
@@ -60,6 +61,7 @@ Usage
         onedrivecmd [OPTIONS] direct od:/foo/bar/
         onedrivecmd [OPTIONS] get od:/foo/file.txt /tmp/
         onedrivecmd [OPTIONS] put /tmp/hello.txt od:/bar/
+        onedrivecmd [OPTIONS] put /tmp/dir/ od:/bar/
         onedrivecmd [OPTIONS] delete od:/foo/bar
         onedrivecmd [OPTIONS] mkdir od:/foo/bar/
         onedrivecmd [OPTIONS] search foobar
@@ -177,7 +179,26 @@ Examples
     od:/1.png   342677  2016-09-24T04:28:51.617000Z
     od:/OneDrive 入门.pdf 1159342 2016-08-23T03:03:55.043000Z
 
-    $ onedrivecmd put /Users/Beining/Documents/1.png od:/
+    $ onedrivecmd put /tmp/demo/ od:/test/
+    
+    [2019-03-19 11:57:07]
+    /tmp/demo/index.html ==> od:/test/demo/index.html
+    Uploading |################################| 100.0% - 0s
+
+    [2019-03-19 11:57:26]
+    /tmp/demo/Pic/1.png ==> od:/test/demo/Pic/1.png
+    Uploading |################################| 100.0% - 0s
+
+    [2019-03-19 11:57:44]
+    /tmp/demo/Pic/2.png ==> od:/test/demo/Pic/2.png
+    Uploading |################################| 100.0% - 0s
+
+    [2019-03-19 11:58:03]
+    /tmp/demo/Pic/test/365.ps1 ==> od:/test/demo/Pic/test/365.ps1
+    Uploading |################################| 100.0% - 0s
+
+    [2019-03-19 11:58:22]
+    /tmp/demo/Pic/3.jpg ==> od:/test/demo/Pic/3.jpg
     Uploading |################################| 100.0% - 0s
 
 
@@ -231,8 +252,9 @@ Examples
 TODO
 ~~~~
 
+-  Recursive 'get' and 'mkdir'.
+-  Perfect retry-when-failed function.
 -  Move
--  Recursive list(could be my machine too slow)
 -  I will not write sync since we have
    `rclone <https://github.com/ncw/rclone>`__ which already supports
    Onedrive. Feel free to send me pull requests though.

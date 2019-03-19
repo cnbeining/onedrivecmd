@@ -299,7 +299,7 @@ def do_direct(client, args):
 
 
 def do_list(client, args, lFolders = None):
-    """OneDriveClient, [str] -> OneDriveClient
+    """OneDriveClient, [str], str -> OneDriveClient
 
     List the content of a remote folder,
     with possbility of doing a recurrsive listing.
@@ -331,7 +331,8 @@ def do_list(client, args, lFolders = None):
             if show_fullpath:
                 name = 'od:' + curPath + '/' + i.name
             else:
-                name = 'od:/' + i.name
+                # if name start with 'od:/', users may think it was in the root directory '/'
+                name = 'od:' + i.name
 
             if i.folder:
                 # make a little difference so the user can notice
@@ -373,7 +374,7 @@ def do_put(client, args):
     # set target dir
     if not args.rest[-1].startswith('od:/'):
         from_list = args.rest
-        target_dir = '/'
+        target_dir = 'od:/'
 
     else:
         from_list = args.rest[:-1]
@@ -387,12 +388,14 @@ def do_put(client, args):
         # SDK one
         # ONLY USED WITH HACK
         if args.hack:
-            client.item(drive = "me", path = target_dir).upload_async(i)
-            break
+            upload_self_hack(client=client,
+                             source_file = i,
+                             dest_path = target_dir)
+            #client.item(drive = "me", path = target_dir[3:-1]).upload_async(i)
 
         # Home brew one, with progress bar
         else:
-            upload_self(client=client,
+            upload_self(client = client,
                         source_file = i,
                         dest_path = target_dir,
                         chunksize = int(args.chunk))
