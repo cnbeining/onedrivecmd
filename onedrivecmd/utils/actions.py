@@ -388,13 +388,14 @@ def do_put(client, args):
         # SDK one
         # ONLY USED WITH HACK
         if args.hack:
-            # f**k. so many bugs with this, i have to rewrite.
-            client.item(drive = "me", path = target_dir[3:-1]).upload_async(i)
-            break
+            upload_self_hack(client=client,
+                             source_file = i,
+                             dest_path = target_dir)
+            #client.item(drive = "me", path = target_dir[3:-1]).upload_async(i)
 
         # Home brew one, with progress bar
         else:
-            upload_self(client=client,
+            upload_self(client = client,
                         source_file = i,
                         dest_path = target_dir,
                         chunksize = int(args.chunk))

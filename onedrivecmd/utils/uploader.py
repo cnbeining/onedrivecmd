@@ -57,7 +57,7 @@ def upload_one_piece(uploadUrl = '', token = '', source_file = '', range_this = 
 def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
     """OneDriveClient, str, str, int->Bool
 
-    Upload a file via the API, instead of the SDK.
+    Upload a file/dir via the API, instead of the SDK.
 
     Ref: https://dev.onedrive.com/items/upload_post.htm
     """
@@ -100,9 +100,13 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
     
         # filesize cannot > 10GiB
         file_size = os.path.getsize(source_file)
-    
-        # print(file_size)
-    
+
+        # API may be unable to cope with empty files, as I tested by uploading with range_list [[0,0]].
+        if file_size==0:
+            print("Empty file detected, trying SDK...")
+            client.item(drive = "me", path = dest_path).upload_async(source_file)
+            return True
+        
         range_list = [[i, i + chunksize - 1] for i in range(0, file_size, chunksize)]
         range_list[-1][-1] = file_size - 1
     
@@ -113,7 +117,10 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
         # Session reuse when uploading, hopefully will kill some overhead
         requests_session = requests.Session()
         for i in range_list:
-            while (True):
+            for j in range(0,6):
+                if j==5:
+                    print("\n\033[31mTrial limit exceeded, skip this file.\033[0m")
+                    return False
                 try:
                     upload_one_piece(uploadUrl = uploadUrl, token = get_access_token(client), source_file = source_file,
                                      range_this = i, file_size = file_size, requests_session = requests_session)
@@ -131,6 +138,51 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
             upload_self(client, source_file+"/"+new_source_file, new_dest_path, chunksize)
     return True
 
+def upload_self_hack(client, source_file = '', dest_path = ''):
+    """OneDriveClient, str, str->Bool
+
+    Upload a file/dir via the SDK.
+    """
+
+    if not dest_path.endswith('/'):
+        dest_path += '/'
+
+    if source_file.endswith('/'):
+        source_file=source_file[:-1]
+
+    # check if it's a file
+    if os.path.isfile(source_file):
+        # token refresh
+        if token_time_to_live(client) < 50*60:
+            refresh_token(client)
+            
+        dest_path = ('' if path_to_remote_path(dest_path)=='/' else path_to_remote_path(dest_path)) + '/' + path_to_name(source_file)
+        # Stamps
+        print(" ")
+        os.system("echo [\"$(date +%F\\ %T)\"]")
+        print("\033[36m"+source_file+"\033[0m ==> \033[36mod:"+dest_path+"\033[0m")
+        
+        # upload with SDK. This is the only difference with upload_self(...)
+        for j in range(0,6):
+            if j==5:
+                print("\n\033[31mTrial limit exceeded, skip this file.\033[0m")
+                return False
+            try:
+                client.item(drive = "me", path = dest_path).upload_async(source_file)
+                break
+            except Exception as e:
+                print("\033[31mAn error occured:\033[0m "+str(e)+" \033[31mwill try again later.\033[0m")
+                continue
+    
+    # so it's a directory
+    else:
+        new_dest_path=dest_path+path_to_name(source_file)+"/"
+        for new_source_file in os.listdir(source_file):
+            upload_self_hack(client, source_file+"/"+new_source_file, new_dest_path)
+
+    return True
+    
+    
 
 if __name__ == '__main__':
     pass
