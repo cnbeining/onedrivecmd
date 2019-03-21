@@ -5,6 +5,7 @@
 # Created: 09/24/2016
 
 from __future__ import unicode_literals
+from collections import OrderedDict
 
 try:
     from static import *
@@ -200,6 +201,10 @@ def do_get(client, args):
             # This is slower then I thought.
             r = requests.get(item_info[0], stream = True)
 
+            if r.status_code > 201:
+                print("\033[31mRequest error:\033[0m "+r.json()['error']['message'])
+                return None
+
             total_length = int(r.headers.get('content-length'))
 
             # this will affect the download speed, but too large will result in progress bar update frequency too low
@@ -292,6 +297,9 @@ def do_direct(client, args):
         if '1drv.ms' in permission.link.web_url:  # personal
             # link like: https://1drv.ms/u/s!blahblah
             req = requests.get(permission.link.web_url, allow_redirects = False)
+            if req.status_code > 201:
+                print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+                return None
             # link become: https://onedrive.live.com/redir?resid=xxx!111&authkey=!xxx
             print(req.headers['Location'].replace('redir?', 'download?'))
 
@@ -299,7 +307,7 @@ def do_direct(client, args):
 
 
 def do_list(client, args, lFolders = None):
-    """OneDriveClient, [str] -> OneDriveClient
+    """OneDriveClient, [str], str -> OneDriveClient
 
     List the content of a remote folder,
     with possbility of doing a recurrsive listing.
@@ -331,7 +339,8 @@ def do_list(client, args, lFolders = None):
             if show_fullpath:
                 name = 'od:' + curPath + '/' + i.name
             else:
-                name = 'od:/' + i.name
+                # if name start with 'od:/', users may think it was in the root directory '/'
+                name = 'od:' + i.name
 
             if i.folder:
                 # make a little difference so the user can notice
@@ -373,7 +382,7 @@ def do_put(client, args):
     # set target dir
     if not args.rest[-1].startswith('od:/'):
         from_list = args.rest
-        target_dir = '/'
+        target_dir = 'od:/'
 
     else:
         from_list = args.rest[:-1]
@@ -387,12 +396,14 @@ def do_put(client, args):
         # SDK one
         # ONLY USED WITH HACK
         if args.hack:
-            client.item(drive = "me", path = target_dir).upload_async(i)
-            break
+            upload_self_hack(client=client,
+                             source_file = i,
+                             dest_path = target_dir)
+            #client.item(drive = "me", path = target_dir[3:-1]).upload_async(i)
 
         # Home brew one, with progress bar
         else:
-            upload_self(client=client,
+            upload_self(client = client,
                         source_file = i,
                         dest_path = target_dir,
                         chunksize = int(args.chunk))
@@ -419,6 +430,9 @@ def do_delete(client, args):
             req = requests.delete(api_base_url + 'drive/items/{id}'.format(id = f.id),
                                   headers = {'Authorization': 'bearer {access_token}'.format(
                                       access_token = get_access_token(client)), })
+            if req.status_code > 201:
+                print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+                return None
 
     return client
 
@@ -448,13 +462,17 @@ def do_mkdir(client, args):
                                'Content-Type': 'application/json',
                                'Prefer': 'respond-async', })
 
+        if req.status_code > 201:
+            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            return None
+
         req = convert_utf8_dict_to_dict(req.json())
         parent_id = req['id']
 
-        data = {
-            "name": path_to_name(folder_path),
-            "folder": {}
-        }
+        data = OrderedDict([
+            ("name", path_to_name(folder_path)),
+            ("folder", {})
+        ])
 
         req = requests.post(client.base_url + '/drive/items/{parent_id}/children'.format(parent_id = parent_id),
                             headers = {'Authorization': 'bearer {access_token}'.format(
@@ -462,6 +480,10 @@ def do_mkdir(client, args):
                                 'Content-Type': 'application/json',
                                 'Prefer': 'respond-async', },
                             json = data)
+
+        if req.status_code > 201:
+            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            return None
 
         req = convert_utf8_dict_to_dict(req.json())
 
@@ -515,7 +537,7 @@ def do_remote(client, args):
     for i in args.rest:
         # There is no guarantee that this shall be normal, JUST like
         # all the similar services
-        json_data = {'@content.sourceUrl': i, 'file': {}, 'name': path_to_name(i)}
+        json_data = OrderedDict([('@content.sourceUrl', i), ('file', {}), ('name', path_to_name(i))])
 
         root = client.item(drive = 'me', id = 'root').get()
         parent_id = root.id
@@ -526,7 +548,9 @@ def do_remote(client, args):
                                 access_token = get_access_token(client)),
                                 'Content-Type': 'application/json',
                                 'Prefer': 'respond-async', })
-
+        if req.status_code > 201:
+            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            return None
         print(req.headers['location'])
 
     return client
@@ -550,7 +574,9 @@ def do_quota(client, args):
                        headers = {
                            'Authorization': 'bearer {access_token}'.format(access_token = get_access_token(client)),
                            'content-type': 'application/json'})
-
+    if req.status_code > 201:
+        print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+        return None
     print('''
     Total Size: {total},
     Used: {used},
