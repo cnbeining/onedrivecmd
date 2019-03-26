@@ -158,6 +158,18 @@ def do_get(client, args):
     download it with a homebrew single-thread downloader with progress bar,
     or call aria2 to do the download.
     """
+    if not args.rest[-1].startswith('od:/'):
+        local_dir=args.rest[-1]
+        if local_dir.endswith('/'):
+            local_dir=local_dir[:-1]
+        if os.path.isfile(local_dir):
+            print("\033[31mFile error:\033[0m "+"The dest dir is a file!")
+            return None
+        if not os.path.isdir(local_dir):
+            os.makedirs(local_dir)
+        args.rest=args.rest[:-1]
+    else:
+        local_dir='.'
 
     link_list = []
     for f in args.rest:
@@ -178,7 +190,7 @@ def do_get(client, args):
             link_list.append(item_info[0])
             break
 
-        local_name = path_to_name(f)
+        local_path = local_dir + '/' + path_to_name(f)
 
         # if hack, use aria2
         if args.hack:
@@ -187,7 +199,7 @@ def do_get(client, args):
             # token = get_access_token(client)
             # header = 'Authorization: bearer {access_token}'.format(access_token = token)
             cmd = 'aria2c -c -o "{local_name}" -s16 -x16 -k1M "{remote_link}"'
-            cmd = cmd.format(local_name = local_name,
+            cmd = cmd.format(local_name = local_path,
                              remote_link = item_info[0], )
             #                 header = header)
             execute_cmd(cmd)
@@ -214,7 +226,7 @@ def do_get(client, args):
             bar = Bar('Downloading', max = total_length / chunk_size, suffix = '%(percent).1f%% - %(eta)ds')
 
             # Save file as chunk, upload Bar as chunk written
-            with open(local_name, 'wb') as f:
+            with open(local_path, 'wb') as f:
                 for chunk in r.iter_content(chunk_size = chunk_size):
                     if chunk:
                         f.write(chunk)
