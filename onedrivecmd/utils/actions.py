@@ -437,13 +437,13 @@ def do_delete(client, args):
     for i in args.rest:
         if i.startswith('od:/'):  # is somewhere remote
             f = get_remote_item(client, path = i)
-
+            
             # make the request, we have to do it ourselves
-            req = requests.delete(api_base_url + 'drive/items/{id}'.format(id = f.id),
+            req = requests.delete(client.base_url + '/drive/items/{id}'.format(id = f.id),
                                   headers = {'Authorization': 'bearer {access_token}'.format(
                                       access_token = get_access_token(client)), })
-            if req.status_code > 201:
-                print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            if not req.status_code == 204:
+                print("\033[31mRequest error:\033[0m "+str(req.status_code)+" "+req.json()['error']['message'])
                 return None
 
     return client
