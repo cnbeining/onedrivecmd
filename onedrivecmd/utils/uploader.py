@@ -14,11 +14,13 @@ try:
     from helper_file import *
     from helper_item import *
     from session import *
+    from helper_print import *
 except ImportError:
     from .static import *
     from .helper_file import *
     from .helper_item import *
     from .session import *
+    from .helper_print import *
 
 
 ## Upload related
@@ -78,8 +80,8 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
         dest_path = ('' if path_to_remote_path(dest_path)=='/' else path_to_remote_path(dest_path)) + '/' + path_to_name(source_file)
         # Stamps
         print(" ")
-        os.system("echo [\"$(date +%F\\ %T)\"]")
-        print("\033[36m"+source_file+"\033[0m ==> \033[36mod:"+dest_path+"\033[0m")
+        print_time()
+        print_job_binary(source_file,dest_path)
 
         info_json = json.dumps({'item': OrderedDict([('@name.conflictBehavior', 'rename'), ('name', path_to_name(source_file))])})
     
@@ -91,7 +93,7 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
                                        'content-type': 'application/json'})
     
         if req.status_code > 201:
-            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
             return False
     
         req = convert_utf8_dict_to_dict(req.json())
@@ -119,14 +121,14 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
         for i in range_list:
             for j in range(0,6):
                 if j==5:
-                    print("\n\033[31mTrial limit exceeded, skip this file.\033[0m")
+                    print_error(note="Trial limit exceeded, skip this file.")
                     return False
                 try:
                     upload_one_piece(uploadUrl = uploadUrl, token = get_access_token(client), source_file = source_file,
                                      range_this = i, file_size = file_size, requests_session = requests_session)
                     break
                 except Exception as e:
-                    print("\n\033[31mAn error occured:\033[0m "+str(e)+" \033[31mwill try again later.\033[0m")
+                    print_error("Upload",str(e)+", will try again later.")
                     continue
             bar.next()
 
@@ -159,19 +161,19 @@ def upload_self_hack(client, source_file = '', dest_path = ''):
         dest_path = ('' if path_to_remote_path(dest_path)=='/' else path_to_remote_path(dest_path)) + '/' + path_to_name(source_file)
         # Stamps
         print(" ")
-        os.system("echo [\"$(date +%F\\ %T)\"]")
-        print("\033[36m"+source_file+"\033[0m ==> \033[36mod:"+dest_path+"\033[0m")
+        print_time()
+        print_job_binary(source_file,dest_path)
         
         # upload with SDK. This is the only difference with upload_self(...)
         for j in range(0,6):
             if j==5:
-                print("\n\033[31mTrial limit exceeded, skip this file.\033[0m")
+                print_error(note="Trial limit exceeded, skip this file.")
                 return False
             try:
                 client.item(drive = "me", path = dest_path).upload_async(source_file)
                 break
             except Exception as e:
-                print("\033[31mAn error occured:\033[0m "+str(e)+" \033[31mwill try again later.\033[0m")
+                print_error("Upload",str(e)+", will try again later.")
                 continue
     
     # so it's a directory

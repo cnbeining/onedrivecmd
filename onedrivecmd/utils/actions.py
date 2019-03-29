@@ -13,12 +13,14 @@ try:
     from helper_file import *
     from helper_item import *
     from session import *
+    from helper_print import *
 except ImportError:
     from .static import *
     from .uploader import *
     from .helper_file import *
     from .helper_item import *
     from .session import *
+    from .helper_print import *
 
 try:
     from urlparse import urlparse # python 2
@@ -160,10 +162,10 @@ def do_get(client, args):
     """
     if not args.rest[-1].startswith('od:/'):
         local_dir=args.rest[-1]
-        if local_dir.endswith('/'):
+        if local_dir.endswith("/") and local_dir is not "/":
             local_dir=local_dir[:-1]
         if os.path.isfile(local_dir):
-            print("\033[31mFile error:\033[0m "+"The dest dir is a file!")
+            print_error("File","The dest dir {dir} is a file!".format(dir=local_dir))
             return None
         if not os.path.isdir(local_dir):
             os.makedirs(local_dir)
@@ -173,14 +175,16 @@ def do_get(client, args):
 
     link_list = []
     for f in args.rest:
-
+        if not f.startswith("od:/"):
+            continue
         # get a file item
         item = get_remote_item(client, path = f)
 
         # some error handling
         if item is None:
-            logging.warning('File {path} do not exist!'.format(path = f))
-            break
+            #logging.warning('File {path} do not exist!'.format(path = f))
+            print_error("Remote file", "File {path} does not exist!".format(path=f))
+            return None
 
         # fetch the file url, size and SHA1
         item_info = get_item_temp_download_info(item)
@@ -188,7 +192,7 @@ def do_get(client, args):
         # if only display the url
         if args.url:
             link_list.append(item_info[0])
-            break
+            return None
 
         local_path = local_dir + '/' + path_to_name(f)
 
@@ -210,11 +214,11 @@ def do_get(client, args):
             # This should be better than the built-in one
             # since that one does not comes with any bar, not even a callback point.
             # From http://stackoverflow.com/a/20943461/2946714
-            # This is slower then I thought.
+            # This is slower than I thought.
             r = requests.get(item_info[0], stream = True)
 
             if r.status_code > 201:
-                print("\033[31mRequest error:\033[0m "+r.json()['error']['message'])
+                print_error("Request",str(req.status_code)+" "+r.json()["error"]["message"])
                 return None
 
             total_length = int(r.headers.get('content-length'))
@@ -255,8 +259,9 @@ def do_share(client, args):
 
         # some error handling
         if item is None:
-            logging.warning('File {path} do not exist!'.format(path = f))
-            break
+            print_error("Remote file", "File {path} does not exist!".format(path = f))
+            #logging.warning('File {path} do not exist!'.format(path = f))
+            return None
 
         permission = client.item(id = item.id).create_link("view").post()
 
@@ -283,7 +288,7 @@ def do_direct(client, args):
 
         # some error handling
         if item is None:
-            logging.warning('File {path} do not exist!'.format(path = f))
+            print_error("Remote file", "File {path} does not exist!".format(path = f))
             break
 
         permission = client.item(id = item.id).create_link("view").post()
@@ -310,7 +315,7 @@ def do_direct(client, args):
             # link like: https://1drv.ms/u/s!blahblah
             req = requests.get(permission.link.web_url, allow_redirects = False)
             if req.status_code > 201:
-                print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+                print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
                 return None
             # link become: https://onedrive.live.com/redir?resid=xxx!111&authkey=!xxx
             print(req.headers['Location'].replace('redir?', 'download?'))
@@ -442,8 +447,8 @@ def do_delete(client, args):
             req = requests.delete(client.base_url + '/drive/items/{id}'.format(id = f.id),
                                   headers = {'Authorization': 'bearer {access_token}'.format(
                                       access_token = get_access_token(client)), })
-            if not req.status_code == 204:
-                print("\033[31mRequest error:\033[0m "+str(req.status_code)+" "+req.json()['error']['message'])
+            if req.status_code is not 204:
+                print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
                 return None
 
     return client
@@ -475,7 +480,7 @@ def do_mkdir(client, args):
                                'Prefer': 'respond-async', })
 
         if req.status_code > 201:
-            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            print_error("Request",str(req.status_code)+" "+req.json()['error']['message'])
             return None
 
         req = convert_utf8_dict_to_dict(req.json())
@@ -500,7 +505,8 @@ def do_mkdir(client, args):
         req = convert_utf8_dict_to_dict(req.json())
 
         if not req['name']:
-            print('ERROR: Cannot create {folder_path}'.format(folder_path = folder_path))
+            print_error("Remote file", "Cannot create {folder_path}".format(folder_path = folder_path))
+            return None
 
     return client
 
@@ -561,7 +567,7 @@ def do_remote(client, args):
                                 'Content-Type': 'application/json',
                                 'Prefer': 'respond-async', })
         if req.status_code > 201:
-            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
             return None
         print(req.headers['location'])
 
@@ -587,7 +593,7 @@ def do_quota(client, args):
                            'Authorization': 'bearer {access_token}'.format(access_token = get_access_token(client)),
                            'content-type': 'application/json'})
     if req.status_code > 201:
-        print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+        print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
         return None
     print('''
     Total Size: {total},

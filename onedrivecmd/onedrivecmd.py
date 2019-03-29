@@ -12,6 +12,7 @@ try:
     from onedrivecmd.utils.uploader import *
     from onedrivecmd.utils.helper_item import *
     from onedrivecmd.utils.helper_file import *
+    from onedrivecmd.utils.helper_print import *
 except ImportError:
     from .utils.actions import *
     from .utils.arguments import parse_args
@@ -20,7 +21,7 @@ except ImportError:
     from .utils.uploader import *
     from .utils.helper_item import *
     from .utils.helper_file import *
-
+    from .utils.helper_print import *
 
 def main():
     """None->None
