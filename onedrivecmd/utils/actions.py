@@ -216,12 +216,12 @@ def do_get(client, args):
             # From http://stackoverflow.com/a/20943461/2946714
             # This is slower than I thought.
             r = requests.get(item_info[0], stream = True)
-
+            
             if r.status_code > 201:
                 print_error("Request",str(req.status_code)+" "+r.json()["error"]["message"])
                 return None
 
-            total_length = int(r.headers.get('content-length'))
+            total_length = int(item_info[1])
 
             # this will affect the download speed, but too large will result in progress bar update frequency too low
             chunk_size = 1048576 * 10
