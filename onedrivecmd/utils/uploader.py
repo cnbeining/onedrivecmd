@@ -81,7 +81,7 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
         # Stamps
         print(" ")
         print_time()
-        print_job_binary(source_file,dest_path)
+        print_job_binary(source_file,"od:"+dest_path)
 
         info_json = json.dumps({'item': OrderedDict([('@name.conflictBehavior', 'rename'), ('name', path_to_name(source_file))])})
     
@@ -93,6 +93,8 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
                                        'content-type': 'application/json'})
     
         if req.status_code > 201:
+            # Avoid print message exaclty after the bar.
+            print(" ")
             print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
             return False
     

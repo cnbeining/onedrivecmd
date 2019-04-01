@@ -92,3 +92,6 @@ ENV/
 *.json
 
 .idea/
+
+#vim swap files
+*.swp
