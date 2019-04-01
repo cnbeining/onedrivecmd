@@ -14,6 +14,7 @@ try:
     from helper_item import *
     from session import *
     from helper_print import *
+    from downloader import *
 except ImportError:
     from .static import *
     from .uploader import *
@@ -21,6 +22,7 @@ except ImportError:
     from .helper_item import *
     from .session import *
     from .helper_print import *
+    from .downloader import *
 
 try:
     from urlparse import urlparse # python 2
@@ -178,66 +180,42 @@ def do_get(client, args):
         if not f.startswith("od:/"):
             continue
         # get a file item
-        item = get_remote_item(client, path = f)
-
-        # some error handling
-        if item is None:
-            #logging.warning('File {path} do not exist!'.format(path = f))
-            print_error("Remote file", "File {path} does not exist!".format(path=f))
-            return None
-
-        # fetch the file url, size and SHA1
-        item_info = get_item_temp_download_info(item)
-
-        # if only display the url
-        if args.url:
-            link_list.append(item_info[0])
-            return None
-
-        local_path = local_dir + '/' + path_to_name(f)
-
-        # if hack, use aria2
         if args.hack:
+            item = get_remote_item(client, path = f)
+
+            # some error handling
+            if item is None:
+                #logging.warning('File {path} do not exist!'.format(path = f))
+                print_error("Remote file", "File {path} does not exist!".format(path=f))
+                return None
+
+            # fetch the file url, size and SHA1
+            item_info = get_item_temp_download_info(item)
+
+            # if only display the url
+            if args.url:
+                link_list.append(item_info[0])
+                return None
+
+            local_path = local_dir + '/' + path_to_name(f)
+
+            # if hack, use aria2
+            
             # the link still requires login
             # No it does not require!
             # token = get_access_token(client)
             # header = 'Authorization: bearer {access_token}'.format(access_token = token)
             cmd = 'aria2c -c -o "{local_name}" -s16 -x16 -k1M "{remote_link}"'
             cmd = cmd.format(local_name = local_path,
-                             remote_link = item_info[0], )
+                         remote_link = item_info[0], )
             #                 header = header)
             execute_cmd(cmd)
 
         else:
-            # If called directly, we use our own download
-            # with progress bar.
-            # This should be better than the built-in one
-            # since that one does not comes with any bar, not even a callback point.
-            # From http://stackoverflow.com/a/20943461/2946714
-            # This is slower than I thought.
-            r = requests.get(item_info[0], stream = True)
-            
-            if r.status_code > 201:
-                print_error("Request",str(req.status_code)+" "+r.json()["error"]["message"])
-                return None
-
-            total_length = int(item_info[1])
-
-            # this will affect the download speed, but too large will result in progress bar update frequency too low
-            chunk_size = 1048576 * 10
-
-            # Bar init
-            bar = Bar('Downloading', max = total_length / chunk_size, suffix = '%(percent).1f%% - %(eta)ds')
-
-            # Save file as chunk, upload Bar as chunk written
-            with open(local_path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size = chunk_size):
-                    if chunk:
-                        f.write(chunk)
-                        f.flush()
-                        bar.next()
-
-                bar.finish()
+            download_self(client=client, 
+                          remote_path=f,
+                          local_dir=local_dir,
+                          url=args.url)
 
     return client
 
