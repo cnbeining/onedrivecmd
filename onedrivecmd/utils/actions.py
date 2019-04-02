@@ -288,8 +288,11 @@ def do_list(client, args, lFolders = None):
 
     for path in folder_list:
         # get the folder entry point
-        curPath = path_to_remote_path(path)
+        curPath=path
+        if not curPath.endswith("/"):
+            curPath=curPath+"/"
         folder = get_remote_item(client, path = curPath)
+        
         if not folder.folder:
             print_error("Remote item", curPath+" is not a folder!")
             return client
@@ -309,7 +312,7 @@ def do_list(client, args, lFolders = None):
 
                 # handle recursive
                 if is_recursive:
-                    do_list(client, args, [get_remote_path_by_item(i) + '/'])
+                    do_list(client, args, [curPath + i.name + '/'])
 
             # format as megacmd
 
