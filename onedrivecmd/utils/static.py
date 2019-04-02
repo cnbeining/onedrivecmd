@@ -7,7 +7,7 @@
 
 global VER, redirect_uri, client_secret, client_id, api_base_url, scopes, discovery_uri, auth_server_url, auth_token_url
 
-VER = 'OnedriveCMD V0.1.7.6-dev'
+VER = 'OnedriveCMD V0.1.8'
 
 # If you are not sure whether this is safe,
 # you can register your own APP and use your own URL.
