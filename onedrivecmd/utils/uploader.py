@@ -67,7 +67,7 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
     if not dest_path.endswith('/'):
         dest_path += '/'
 
-    if source_file.endswith('/'):
+    if source_file.endswith('/') and source_file is not "/":
         source_file=source_file[:-1]
 
     # check if it's a file
@@ -137,7 +137,7 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
         bar.finish()
     # So it's a dir, upload it recursively.
     else:
-        new_dest_path=dest_path+path_to_name(source_file)+"/"
+        new_dest_path=dest_path+path_to_name(source_file)
         for new_source_file in os.listdir(source_file):
             upload_self(client, source_file+"/"+new_source_file, new_dest_path, chunksize)
     return True

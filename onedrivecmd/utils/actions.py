@@ -166,57 +166,18 @@ def do_get(client, args):
         local_dir=args.rest[-1]
         if local_dir.endswith("/") and local_dir is not "/":
             local_dir=local_dir[:-1]
-        if os.path.isfile(local_dir):
-            print_error("File","The dest dir {dir} is a file!".format(dir=local_dir))
-            return None
-        if not os.path.isdir(local_dir):
-            os.makedirs(local_dir)
         args.rest=args.rest[:-1]
     else:
         local_dir='.'
 
-    link_list = []
     for f in args.rest:
         if not f.startswith("od:/"):
             continue
-        # get a file item
-        if args.hack:
-            item = get_remote_item(client, path = f)
-
-            # some error handling
-            if item is None:
-                #logging.warning('File {path} do not exist!'.format(path = f))
-                print_error("Remote file", "File {path} does not exist!".format(path=f))
-                return None
-
-            # fetch the file url, size and SHA1
-            item_info = get_item_temp_download_info(item)
-
-            # if only display the url
-            if args.url:
-                link_list.append(item_info[0])
-                return None
-
-            local_path = local_dir + '/' + path_to_name(f)
-
-            # if hack, use aria2
-            
-            # the link still requires login
-            # No it does not require!
-            # token = get_access_token(client)
-            # header = 'Authorization: bearer {access_token}'.format(access_token = token)
-            cmd = 'aria2c -c -o "{local_name}" -s16 -x16 -k1M "{remote_link}"'
-            cmd = cmd.format(local_name = local_path,
-                         remote_link = item_info[0], )
-            #                 header = header)
-            execute_cmd(cmd)
-
-        else:
-            download_self(client=client, 
-                          remote_path=f,
-                          local_dir=local_dir,
-                          url=args.url)
-
+        download_self(client=client, 
+                      remote_path=f,
+                      local_dir=local_dir,
+                      url=args.url,
+                      hack=args.hack)
     return client
 
 
@@ -329,6 +290,11 @@ def do_list(client, args, lFolders = None):
         # get the folder entry point
         curPath = path_to_remote_path(path)
         folder = get_remote_item(client, path = curPath)
+        if not folder.folder:
+            print_error("Remote item", curPath+" is not a folder!")
+            return client
+        else:
+            folder=get_remote_folder_children(client, id=folder.id)
 
         for i in folder:
             if show_fullpath:

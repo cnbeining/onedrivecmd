@@ -35,10 +35,8 @@ def get_remote_item(client, path = '', id = ''):
     except onedrivesdk.error.OneDriveError:
         # onedrivesdk.error.OneDriveError: itemNotFound - Item does not exist
         return None
-
-    if f.folder:
-        f = get_remote_folder_children(client, id = f.id)
-
+    #if f.folder:
+    #    f = get_remote_folder_children(client, id = f.id)
     return f
 
 def get_remote_folder_children(client, path="", id=""):
@@ -50,14 +48,14 @@ def get_remote_folder_children(client, path="", id=""):
     try:
         if path is not "":
             path = od_path_api_path(path)
-            f = client.item(drive="me", path=path).get()
-            if not f.folder:
-                return None
+            #f = client.item(drive="me", path=path).get()
+            #if not f.folder:
+            #    return None
             f = client.item(drive="me", path=path).children.get()
         elif id is not "":
-            f = client.item(drive="me", id=id).get()
-            if not f.folder:
-                return None
+            #f = client.item(drive="me", id=id).get()
+            #if not f.folder:
+            #    return None
             f = client.item(drive="me", id=id).children.get()
         else:
             return None
