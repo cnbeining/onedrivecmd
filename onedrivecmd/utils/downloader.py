@@ -49,6 +49,8 @@ def download_self(client, remote_path="", local_dir="", chunksize = 10247680, ur
         os.makedirs(local_dir)
 
     if not item.folder:
+        if token_time_to_live(client) < 50*60:
+            refresh_token(client)
         # fetch the file [url, size]
         item_info=get_item_temp_download_info(item)
         # if only show thr url '-url'
