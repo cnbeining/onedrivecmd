@@ -28,7 +28,7 @@ Features
 
 -  Ability to access files and folders using a path URI
 -  Configuration file (~/.onedrive.json)
--  Individual file get operations
+-  folder/file get operations, and retry when failed (experimental)
 -  folder/file put operations, and retry when failed (experimental)
 -  List operation (shows file size and timestamp)
 -  Download and upload with native progress bar (with option of

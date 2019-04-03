@@ -15,7 +15,7 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
 ### Features
   - Ability to access files and folders using a path URI
   - Configuration file (~/.onedrive.json)
-  - Individual file get operations
+  - Folder/file get operations, and retry when failed (experimental)
   - Folder/file put operations, and retry when failed (experimental)
   - List operation (shows file size and timestamp)
   - Download and upload with native progress bar (with option of downloading with aria2!)
