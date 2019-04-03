@@ -13,12 +13,16 @@ try:
     from helper_file import *
     from helper_item import *
     from session import *
+    from helper_print import *
+    from downloader import *
 except ImportError:
     from .static import *
     from .uploader import *
     from .helper_file import *
     from .helper_item import *
     from .session import *
+    from .helper_print import *
+    from .downloader import *
 
 try:
     from urlparse import urlparse # python 2
@@ -158,71 +162,22 @@ def do_get(client, args):
     download it with a homebrew single-thread downloader with progress bar,
     or call aria2 to do the download.
     """
+    if not args.rest[-1].startswith('od:/'):
+        local_dir=args.rest[-1]
+        if local_dir.endswith("/") and local_dir is not "/":
+            local_dir=local_dir[:-1]
+        args.rest=args.rest[:-1]
+    else:
+        local_dir='.'
 
-    link_list = []
     for f in args.rest:
-
-        # get a file item
-        item = get_remote_item(client, path = f)
-
-        # some error handling
-        if item is None:
-            logging.warning('File {path} do not exist!'.format(path = f))
-            break
-
-        # fetch the file url, size and SHA1
-        item_info = get_item_temp_download_info(item)
-
-        # if only display the url
-        if args.url:
-            link_list.append(item_info[0])
-            break
-
-        local_name = path_to_name(f)
-
-        # if hack, use aria2
-        if args.hack:
-            # the link still requires login
-            # No it does not require!
-            # token = get_access_token(client)
-            # header = 'Authorization: bearer {access_token}'.format(access_token = token)
-            cmd = 'aria2c -c -o "{local_name}" -s16 -x16 -k1M "{remote_link}"'
-            cmd = cmd.format(local_name = local_name,
-                             remote_link = item_info[0], )
-            #                 header = header)
-            execute_cmd(cmd)
-
-        else:
-            # If called directly, we use our own download
-            # with progress bar.
-            # This should be better than the built-in one
-            # since that one does not comes with any bar, not even a callback point.
-            # From http://stackoverflow.com/a/20943461/2946714
-            # This is slower then I thought.
-            r = requests.get(item_info[0], stream = True)
-
-            if r.status_code > 201:
-                print("\033[31mRequest error:\033[0m "+r.json()['error']['message'])
-                return None
-
-            total_length = int(r.headers.get('content-length'))
-
-            # this will affect the download speed, but too large will result in progress bar update frequency too low
-            chunk_size = 1048576 * 10
-
-            # Bar init
-            bar = Bar('Downloading', max = total_length / chunk_size, suffix = '%(percent).1f%% - %(eta)ds')
-
-            # Save file as chunk, upload Bar as chunk written
-            with open(local_name, 'wb') as f:
-                for chunk in r.iter_content(chunk_size = chunk_size):
-                    if chunk:
-                        f.write(chunk)
-                        f.flush()
-                        bar.next()
-
-                bar.finish()
-
+        if not f.startswith("od:/"):
+            continue
+        download_self(client=client, 
+                      remote_path=f,
+                      local_dir=local_dir,
+                      url=args.url,
+                      hack=args.hack)
     return client
 
 
@@ -243,8 +198,9 @@ def do_share(client, args):
 
         # some error handling
         if item is None:
-            logging.warning('File {path} do not exist!'.format(path = f))
-            break
+            print_error("Remote file", "File {path} does not exist!".format(path = f))
+            #logging.warning('File {path} do not exist!'.format(path = f))
+            return None
 
         permission = client.item(id = item.id).create_link("view").post()
 
@@ -271,7 +227,7 @@ def do_direct(client, args):
 
         # some error handling
         if item is None:
-            logging.warning('File {path} do not exist!'.format(path = f))
+            print_error("Remote file", "File {path} does not exist!".format(path = f))
             break
 
         permission = client.item(id = item.id).create_link("view").post()
@@ -298,7 +254,7 @@ def do_direct(client, args):
             # link like: https://1drv.ms/u/s!blahblah
             req = requests.get(permission.link.web_url, allow_redirects = False)
             if req.status_code > 201:
-                print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+                print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
                 return None
             # link become: https://onedrive.live.com/redir?resid=xxx!111&authkey=!xxx
             print(req.headers['Location'].replace('redir?', 'download?'))
@@ -332,8 +288,16 @@ def do_list(client, args, lFolders = None):
 
     for path in folder_list:
         # get the folder entry point
-        curPath = path_to_remote_path(path)
+        curPath=path
+        if not curPath.endswith("/"):
+            curPath=curPath+"/"
         folder = get_remote_item(client, path = curPath)
+        
+        if not folder.folder:
+            print_error("Remote item", curPath+" is not a folder!")
+            return client
+        else:
+            folder=get_remote_folder_children(client, id=folder.id)
 
         for i in folder:
             if show_fullpath:
@@ -348,7 +312,7 @@ def do_list(client, args, lFolders = None):
 
                 # handle recursive
                 if is_recursive:
-                    do_list(client, args, [get_remote_path_by_item(i) + '/'])
+                    do_list(client, args, [curPath + i.name + '/'])
 
             # format as megacmd
 
@@ -425,13 +389,13 @@ def do_delete(client, args):
     for i in args.rest:
         if i.startswith('od:/'):  # is somewhere remote
             f = get_remote_item(client, path = i)
-
+            
             # make the request, we have to do it ourselves
-            req = requests.delete(api_base_url + 'drive/items/{id}'.format(id = f.id),
+            req = requests.delete(client.base_url + '/drive/items/{id}'.format(id = f.id),
                                   headers = {'Authorization': 'bearer {access_token}'.format(
                                       access_token = get_access_token(client)), })
-            if req.status_code > 201:
-                print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            if req.status_code is not 204:
+                print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
                 return None
 
     return client
@@ -463,7 +427,7 @@ def do_mkdir(client, args):
                                'Prefer': 'respond-async', })
 
         if req.status_code > 201:
-            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            print_error("Request",str(req.status_code)+" "+req.json()['error']['message'])
             return None
 
         req = convert_utf8_dict_to_dict(req.json())
@@ -488,7 +452,8 @@ def do_mkdir(client, args):
         req = convert_utf8_dict_to_dict(req.json())
 
         if not req['name']:
-            print('ERROR: Cannot create {folder_path}'.format(folder_path = folder_path))
+            print_error("Remote file", "Cannot create {folder_path}".format(folder_path = folder_path))
+            return None
 
     return client
 
@@ -549,7 +514,7 @@ def do_remote(client, args):
                                 'Content-Type': 'application/json',
                                 'Prefer': 'respond-async', })
         if req.status_code > 201:
-            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
             return None
         print(req.headers['location'])
 
@@ -575,7 +540,7 @@ def do_quota(client, args):
                            'Authorization': 'bearer {access_token}'.format(access_token = get_access_token(client)),
                            'content-type': 'application/json'})
     if req.status_code > 201:
-        print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+        print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
         return None
     print('''
     Total Size: {total},

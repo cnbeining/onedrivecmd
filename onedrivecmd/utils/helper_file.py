@@ -24,7 +24,11 @@ def execute_cmd(cmd):
     give a simple warning if the command failed,
     return the exit code of the command.
     """
-    os.system(cmd.decode("utf-8").encode(sys.stdout.encoding))
+    try:
+        os.system(cmd.decode("utf-8").encode(sys.stdout.encoding))
+    # python 3
+    except AttributeError:
+        os.system(cmd)
 
 
 ## file related

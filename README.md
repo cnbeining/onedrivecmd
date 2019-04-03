@@ -36,9 +36,10 @@ Also you can clone this project, then execute ```python3 setup.py install``` or 
         onedrivecmd [OPTIONS] init
         onedrivecmd [OPTIONS] init_business
         onedrivecmd [OPTIONS] list od:/foo/bar/
-        onedrivecmd [OPTIONS] share od:/foo/bar/
-        onedrivecmd [OPTIONS] direct od:/foo/bar/
+        onedrivecmd [OPTIONS] share od:/foo/doc.txt
+        onedrivecmd [OPTIONS] direct od:/foo/image.jpg
         onedrivecmd [OPTIONS] get od:/foo/file.txt /tmp/
+        onedrivecmd [OPTIONS] get od:/boo/dir/ ./localdir/
         onedrivecmd [OPTIONS] put /tmp/hello.txt od:/bar/
         onedrivecmd [OPTIONS] put /tmp/dir/ od:/bar/
         onedrivecmd [OPTIONS] delete od:/foo/bar
@@ -206,9 +207,10 @@ The delete can only move the item to the trash bin, as there is no way of just d
 
 ### TODO
 
-* Recursive 'get' and 'mkdir'.
+* Recursive 'mkdir'.
 * Perfect retry-when-failed function.
 * Move
+* Code refactoring
 * I will not write sync since we have [rclone](https://github.com/ncw/rclone) which already supports Onedrive. Feel free to send me pull requests though.
 * I cannot think of anything. Open issues if you have amazing ideas.
 
@@ -226,6 +228,8 @@ Beining, https://www.cnbeining.com/ , ```i [at] cnbeining.com``` .
 
 Driven by coffee, coffee and coffee.
 
+
+Collaborator/Dict Xiong, https://beardic.cn/, ```me [at] beardic.cn```.
 
 ### 中文说明
 
