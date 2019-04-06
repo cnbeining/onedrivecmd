@@ -1,6 +1,8 @@
 onedrivecmd
 =======
 
+<a href="https://996.icu"><img src="https://img.shields.io/badge/link-996.icu-red.svg"></a>
+
 A command line client for Onedrive(including Office 365 and Business).
 
 Based on [onedrive-sdk-python](https://github.com/OneDrive/onedrive-sdk-python) , with lots of modifications.
