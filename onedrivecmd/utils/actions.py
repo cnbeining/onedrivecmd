@@ -5,6 +5,7 @@
 # Created: 09/24/2016
 
 from __future__ import unicode_literals
+from collections import OrderedDict
 
 try:
     from static import *
@@ -12,12 +13,16 @@ try:
     from helper_file import *
     from helper_item import *
     from session import *
+    from helper_print import *
+    from downloader import *
 except ImportError:
     from .static import *
     from .uploader import *
     from .helper_file import *
     from .helper_item import *
     from .session import *
+    from .helper_print import *
+    from .downloader import *
 
 try:
     from urlparse import urlparse # python 2
@@ -157,67 +162,22 @@ def do_get(client, args):
     download it with a homebrew single-thread downloader with progress bar,
     or call aria2 to do the download.
     """
+    if not args.rest[-1].startswith('od:/'):
+        local_dir=args.rest[-1]
+        if local_dir.endswith("/") and local_dir is not "/":
+            local_dir=local_dir[:-1]
+        args.rest=args.rest[:-1]
+    else:
+        local_dir='.'
 
-    link_list = []
     for f in args.rest:
-
-        # get a file item
-        item = get_remote_item(client, path = f)
-
-        # some error handling
-        if item is None:
-            logging.warning('File {path} do not exist!'.format(path = f))
-            break
-
-        # fetch the file url, size and SHA1
-        item_info = get_item_temp_download_info(item)
-
-        # if only display the url
-        if args.url:
-            link_list.append(item_info[0])
-            break
-
-        local_name = path_to_name(f)
-
-        # if hack, use aria2
-        if args.hack:
-            # the link still requires login
-            # No it does not require!
-            # token = get_access_token(client)
-            # header = 'Authorization: bearer {access_token}'.format(access_token = token)
-            cmd = 'aria2c -c -o "{local_name}" -s16 -x16 -k1M "{remote_link}"'
-            cmd = cmd.format(local_name = local_name,
-                             remote_link = item_info[0], )
-            #                 header = header)
-            execute_cmd(cmd)
-
-        else:
-            # If called directly, we use our own download
-            # with progress bar.
-            # This should be better than the built-in one
-            # since that one does not comes with any bar, not even a callback point.
-            # From http://stackoverflow.com/a/20943461/2946714
-            # This is slower then I thought.
-            r = requests.get(item_info[0], stream = True)
-
-            total_length = int(r.headers.get('content-length'))
-
-            # this will affect the download speed, but too large will result in progress bar update frequency too low
-            chunk_size = 1048576 * 10
-
-            # Bar init
-            bar = Bar('Downloading', max = total_length / chunk_size, suffix = '%(percent).1f%% - %(eta)ds')
-
-            # Save file as chunk, upload Bar as chunk written
-            with open(local_name, 'wb') as f:
-                for chunk in r.iter_content(chunk_size = chunk_size):
-                    if chunk:
-                        f.write(chunk)
-                        f.flush()
-                        bar.next()
-
-                bar.finish()
-
+        if not f.startswith("od:/"):
+            continue
+        download_self(client=client, 
+                      remote_path=f,
+                      local_dir=local_dir,
+                      url=args.url,
+                      hack=args.hack)
     return client
 
 
@@ -238,8 +198,9 @@ def do_share(client, args):
 
         # some error handling
         if item is None:
-            logging.warning('File {path} do not exist!'.format(path = f))
-            break
+            print_error("Remote file", "File {path} does not exist!".format(path = f))
+            #logging.warning('File {path} do not exist!'.format(path = f))
+            return None
 
         permission = client.item(id = item.id).create_link("view").post()
 
@@ -266,7 +227,7 @@ def do_direct(client, args):
 
         # some error handling
         if item is None:
-            logging.warning('File {path} do not exist!'.format(path = f))
+            print_error("Remote file", "File {path} does not exist!".format(path = f))
             break
 
         permission = client.item(id = item.id).create_link("view").post()
@@ -292,14 +253,17 @@ def do_direct(client, args):
         if '1drv.ms' in permission.link.web_url:  # personal
             # link like: https://1drv.ms/u/s!blahblah
             req = requests.get(permission.link.web_url, allow_redirects = False)
+            if req.status_code > 201:
+                print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
+                return None
             # link become: https://onedrive.live.com/redir?resid=xxx!111&authkey=!xxx
             print(req.headers['Location'].replace('redir?', 'download?'))
 
     return client
 
 
-def do_list(client, args):
-    """OneDriveClient, [str] -> OneDriveClient
+def do_list(client, args, lFolders = None):
+    """OneDriveClient, [str], str -> OneDriveClient
 
     List the content of a remote folder,
     with possbility of doing a recurrsive listing.
@@ -309,13 +273,14 @@ def do_list(client, args):
     the programme can just...crash. But who cares? I do not own Microsoft.
     """
 
+    is_recursive = args.recursive
+    show_fullpath = args.fullpath
+
     # recursive call
-    if isinstance(args, list):
-        folder_list = args
-        is_recursive = True
+    if isinstance(lFolders, list):
+        folder_list = lFolders
     else:  # first call
         folder_list = args.rest
-        is_recursive = args.recursive
 
     # Nothing provided. Instead of giving a error, list the root folder
     if folder_list == []:
@@ -323,17 +288,31 @@ def do_list(client, args):
 
     for path in folder_list:
         # get the folder entry point
-        folder = get_remote_item(client, path = path_to_remote_path(path))
+        curPath=path
+        if not curPath.endswith("/"):
+            curPath=curPath+"/"
+        folder = get_remote_item(client, path = curPath)
+        
+        if not folder.folder:
+            print_error("Remote item", curPath+" is not a folder!")
+            return client
+        else:
+            folder=get_remote_folder_children(client, id=folder.id)
 
         for i in folder:
-            name = 'od:/' + i.name
+            if show_fullpath:
+                name = 'od:' + curPath + '/' + i.name
+            else:
+                # if name start with 'od:/', users may think it was in the root directory '/'
+                name = 'od:' + i.name
+
             if i.folder:
                 # make a little difference so the user can notice
                 name += '/'
 
                 # handle recursive
                 if is_recursive:
-                    do_list(client, [get_remote_path_by_item(i)])
+                    do_list(client, args, [curPath + i.name + '/'])
 
             # format as megacmd
 
@@ -367,7 +346,7 @@ def do_put(client, args):
     # set target dir
     if not args.rest[-1].startswith('od:/'):
         from_list = args.rest
-        target_dir = '/'
+        target_dir = 'od:/'
 
     else:
         from_list = args.rest[:-1]
@@ -381,13 +360,14 @@ def do_put(client, args):
         # SDK one
         # ONLY USED WITH HACK
         if args.hack:
-            client.item(drive = "me", path = target_dir).upload_async(i)
-            break
+            upload_self_hack(client=client,
+                             source_file = i,
+                             dest_path = target_dir)
+            #client.item(drive = "me", path = target_dir[3:-1]).upload_async(i)
 
         # Home brew one, with progress bar
         else:
-            upload_self(api_base_url = client.base_url,
-                        token = get_access_token(client),
+            upload_self(client = client,
                         source_file = i,
                         dest_path = target_dir,
                         chunksize = int(args.chunk))
@@ -409,11 +389,14 @@ def do_delete(client, args):
     for i in args.rest:
         if i.startswith('od:/'):  # is somewhere remote
             f = get_remote_item(client, path = i)
-
+            
             # make the request, we have to do it ourselves
-            req = requests.delete(api_base_url + 'drive/items/{id}'.format(id = f.id),
+            req = requests.delete(client.base_url + '/drive/items/{id}'.format(id = f.id),
                                   headers = {'Authorization': 'bearer {access_token}'.format(
                                       access_token = get_access_token(client)), })
+            if req.status_code is not 204:
+                print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
+                return None
 
     return client
 
@@ -443,13 +426,17 @@ def do_mkdir(client, args):
                                'Content-Type': 'application/json',
                                'Prefer': 'respond-async', })
 
+        if req.status_code > 201:
+            print_error("Request",str(req.status_code)+" "+req.json()['error']['message'])
+            return None
+
         req = convert_utf8_dict_to_dict(req.json())
         parent_id = req['id']
 
-        data = {
-            "name": path_to_name(folder_path),
-            "folder": {}
-        }
+        data = OrderedDict([
+            ("name", path_to_name(folder_path)),
+            ("folder", {})
+        ])
 
         req = requests.post(client.base_url + '/drive/items/{parent_id}/children'.format(parent_id = parent_id),
                             headers = {'Authorization': 'bearer {access_token}'.format(
@@ -458,10 +445,15 @@ def do_mkdir(client, args):
                                 'Prefer': 'respond-async', },
                             json = data)
 
+        if req.status_code > 201:
+            print("\033[31mRequest error:\033[0m "+req.json()['error']['message'])
+            return None
+
         req = convert_utf8_dict_to_dict(req.json())
 
         if not req['name']:
-            print('ERROR: Cannot create {folder_path}'.format(folder_path = folder_path))
+            print_error("Remote file", "Cannot create {folder_path}".format(folder_path = folder_path))
+            return None
 
     return client
 
@@ -510,7 +502,7 @@ def do_remote(client, args):
     for i in args.rest:
         # There is no guarantee that this shall be normal, JUST like
         # all the similar services
-        json_data = {'@content.sourceUrl': i, 'file': {}, 'name': path_to_name(i)}
+        json_data = OrderedDict([('@content.sourceUrl', i), ('file', {}), ('name', path_to_name(i))])
 
         root = client.item(drive = 'me', id = 'root').get()
         parent_id = root.id
@@ -521,7 +513,9 @@ def do_remote(client, args):
                                 access_token = get_access_token(client)),
                                 'Content-Type': 'application/json',
                                 'Prefer': 'respond-async', })
-
+        if req.status_code > 201:
+            print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
+            return None
         print(req.headers['location'])
 
     return client
@@ -545,7 +539,9 @@ def do_quota(client, args):
                        headers = {
                            'Authorization': 'bearer {access_token}'.format(access_token = get_access_token(client)),
                            'content-type': 'application/json'})
-
+    if req.status_code > 201:
+        print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
+        return None
     print('''
     Total Size: {total},
     Used: {used},

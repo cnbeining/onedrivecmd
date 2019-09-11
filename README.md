@@ -1,6 +1,8 @@
 onedrivecmd
 =======
 
+<a href="https://996.icu"><img src="https://img.shields.io/badge/link-996.icu-red.svg"></a>
+
 A command line client for Onedrive(including Office 365 and Business).
 
 Based on [onedrive-sdk-python](https://github.com/OneDrive/onedrive-sdk-python) , with lots of modifications.
@@ -15,7 +17,8 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
 ### Features
   - Ability to access files and folders using a path URI
   - Configuration file (~/.onedrive.json)
-  - Individual file put and get operations
+  - Folder/file get operations, and retry when failed (experimental)
+  - Folder/file put operations, and retry when failed (experimental)
   - List operation (shows file size and timestamp)
   - Download and upload with native progress bar (with option of downloading with aria2!)
   - Remote download links to your drive(NEW! Not even available via Web console) (Only available at personal due to API limit)
@@ -27,7 +30,7 @@ Since the recent update of Onedrive's API, there aren't a lot of *nix softwares 
 
 As easy as: ```pip install onedrivecmd```!
 
-Also you can clone this project.
+Also you can clone this project, then execute ```python3 setup.py install``` or ```python setup.py install```
 
 ### Usage
     Usage onedrivecmd:
@@ -35,10 +38,12 @@ Also you can clone this project.
         onedrivecmd [OPTIONS] init
         onedrivecmd [OPTIONS] init_business
         onedrivecmd [OPTIONS] list od:/foo/bar/
-        onedrivecmd [OPTIONS] share od:/foo/bar/
-        onedrivecmd [OPTIONS] direct od:/foo/bar/
+        onedrivecmd [OPTIONS] share od:/foo/doc.txt
+        onedrivecmd [OPTIONS] direct od:/foo/image.jpg
         onedrivecmd [OPTIONS] get od:/foo/file.txt /tmp/
+        onedrivecmd [OPTIONS] get od:/boo/dir/ ./localdir/
         onedrivecmd [OPTIONS] put /tmp/hello.txt od:/bar/
+        onedrivecmd [OPTIONS] put /tmp/dir/ od:/bar/
         onedrivecmd [OPTIONS] delete od:/foo/bar
         onedrivecmd [OPTIONS] mkdir od:/foo/bar/
         onedrivecmd [OPTIONS] search foobar
@@ -50,7 +55,7 @@ Also you can clone this project.
       -h: Help
       -hack: Use aria2 to download file, or the SDK's built-in uploader (without progress bar!)
       -recursive=false: Recursive listing
-      -chunk=62914560: Chunk size when uploading
+      -chunk=62914560: Chunk size when uploading 
       -url=False: Only display the URL when downloading, temp one
 
 
@@ -133,9 +138,27 @@ The delete can only move the item to the trash bin, as there is no way of just d
     od:/1.png	342677	2016-09-24T04:28:51.617000Z
     od:/OneDrive 入门.pdf	1159342	2016-08-23T03:03:55.043000Z
 
-    $ onedrivecmd put /Users/Beining/Documents/1.png od:/
+    $ onedrivecmd put /tmp/demo/ od:/test/
+    
+    [2019-03-19 11:57:07]
+    /tmp/demo/index.html ==> od:/test/demo/index.html
     Uploading |################################| 100.0% - 0s
 
+    [2019-03-19 11:57:26]
+    /tmp/demo/Pic/1.png ==> od:/test/demo/Pic/1.png
+    Uploading |################################| 100.0% - 0s
+
+    [2019-03-19 11:57:44]
+    /tmp/demo/Pic/2.png ==> od:/test/demo/Pic/2.png
+    Uploading |################################| 100.0% - 0s
+
+    [2019-03-19 11:58:03]
+    /tmp/demo/Pic/test/365.ps1 ==> od:/test/demo/Pic/test/365.ps1
+    Uploading |################################| 100.0% - 0s
+
+    [2019-03-19 11:58:22]
+    /tmp/demo/Pic/3.jpg ==> od:/test/demo/Pic/3.jpg
+    Uploading |################################| 100.0% - 0s
 
     $ onedrivecmd get od:/1.pdf
     Downloading |######                          | 21.4% - 74s
@@ -186,8 +209,10 @@ The delete can only move the item to the trash bin, as there is no way of just d
 
 ### TODO
 
+* Recursive 'mkdir'.
+* Perfect retry-when-failed function.
 * Move
-* Recursive list(could be my machine too slow)
+* Code refactoring
 * I will not write sync since we have [rclone](https://github.com/ncw/rclone) which already supports Onedrive. Feel free to send me pull requests though.
 * I cannot think of anything. Open issues if you have amazing ideas.
 
@@ -205,6 +230,8 @@ Beining, https://www.cnbeining.com/ , ```i [at] cnbeining.com``` .
 
 Driven by coffee, coffee and coffee.
 
+
+Collaborator/Dict Xiong, https://beardic.cn/, ```me [at] beardic.cn```.
 
 ### 中文说明
 

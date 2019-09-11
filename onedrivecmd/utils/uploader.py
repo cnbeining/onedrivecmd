@@ -7,15 +7,20 @@
 import json
 from progress.bar import Bar
 import requests
+from collections import OrderedDict
 
 try:
     from static import *
     from helper_file import *
     from helper_item import *
+    from session import *
+    from helper_print import *
 except ImportError:
     from .static import *
     from .helper_file import *
     from .helper_item import *
+    from .session import *
+    from .helper_print import *
 
 
 ## Upload related
@@ -51,10 +56,10 @@ def upload_one_piece(uploadUrl = '', token = '', source_file = '', range_this = 
     return req.status_code
 
 
-def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '', chunksize = 10247680):
-    """str, str, str, int, int->Bool
+def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
+    """OneDriveClient, str, str, int->Bool
 
-    Upload a file via the API, instead of the SDK.
+    Upload a file/dir via the API, instead of the SDK.
 
     Ref: https://dev.onedrive.com/items/upload_post.htm
     """
@@ -62,49 +67,126 @@ def upload_self(api_base_url = '', token = '', source_file = '', dest_path = '',
     if not dest_path.endswith('/'):
         dest_path += '/'
 
-    # Prepare API call
-    dest_path = path_to_remote_path(dest_path) + '/' + path_to_name(source_file)
-    info_json = json.dumps({'item': {'@name.conflictBehavior': 'rename', 'name': path_to_name(source_file)}})
+    if source_file.endswith('/') and source_file is not "/":
+        source_file=source_file[:-1]
 
-    api_url = api_base_url + 'drive/root:{dest_path}:/upload.createSession'.format(dest_path = dest_path)
+    # check if it's a file
+    if os.path.isfile(source_file):
+        # Prepare API call
+        # token expires in 3600s, just refresh it if TTL<50min.
+        if token_time_to_live(client) < 50*60:
+            refresh_token(client)
 
-    req = requests.post(api_url,
-                        data = info_json,
-                        headers = {'Authorization': 'bearer {access_token}'.format(access_token = token),
-                                   'content-type': 'application/json'})
+        dest_path = ('' if path_to_remote_path(dest_path)=='/' else path_to_remote_path(dest_path)) + '/' + path_to_name(source_file)
+        # Stamps
+        print(" ")
+        print_time()
+        print_job_binary(source_file,"od:"+dest_path)
 
-    if req.status_code > 201:
-        print(req.json()['error']['message'])
-        return False
+        info_json = json.dumps({'item': OrderedDict([('@name.conflictBehavior', 'rename'), ('name', path_to_name(source_file))])})
+    
+        api_url = client.base_url + 'drive/root:{dest_path}:/upload.createSession'.format(dest_path = dest_path)
+    
+        req = requests.post(api_url,
+                            data = info_json,
+                            headers = {'Authorization': 'bearer {access_token}'.format(access_token = get_access_token(client)),
+                                       'content-type': 'application/json'})
+    
+        if req.status_code > 201:
+            # Avoid print message exaclty after the bar.
+            print(" ")
+            print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
+            return False
+    
+        req = convert_utf8_dict_to_dict(req.json())
+    
+        uploadUrl = req['uploadUrl']
+    
+        # filesize cannot > 10GiB
+        file_size = os.path.getsize(source_file)
 
-    req = convert_utf8_dict_to_dict(req.json())
+        # API may be unable to cope with empty files, as I tested by uploading with range_list [[0,0]].
+        if file_size==0:
+            print("Empty file detected, trying SDK...")
+            client.item(drive = "me", path = dest_path).upload_async(source_file)
+            return True
+        
+        range_list = [[i, i + chunksize - 1] for i in range(0, file_size, chunksize)]
+        range_list[-1][-1] = file_size - 1
+    
+        # Upload with a progress bar
+        bar = Bar('Uploading', max = len(range_list), suffix = '%(percent).1f%% - %(eta)ds')
+        bar.next()  # nessesery to init the Bar
+    
+        # Session reuse when uploading, hopefully will kill some overhead
+        requests_session = requests.Session()
+        for i in range_list:
+            for j in range(0,6):
+                if j==5:
+                    print_error(note="Trial limit exceeded, skip this file.")
+                    return False
+                try:
+                    upload_one_piece(uploadUrl = uploadUrl, token = get_access_token(client), source_file = source_file,
+                                     range_this = i, file_size = file_size, requests_session = requests_session)
+                    break
+                except Exception as e:
+                    print_error("Upload",str(e)+", will try again later.")
+                    continue
+            bar.next()
 
-    uploadUrl = req['uploadUrl']
-
-    # filesize cannot > 10GiB
-    file_size = os.path.getsize(source_file)
-
-    # print(file_size)
-
-    range_list = [[i, i + chunksize - 1] for i in range(0, file_size, chunksize)]
-    range_list[-1][-1] = file_size - 1
-
-    # Upload with a progress bar
-    bar = Bar('Uploading', max = len(range_list), suffix = '%(percent).1f%% - %(eta)ds')
-    bar.next()  # nessesery to init the Bar
-
-    # Session reuse when uploading, hopefully will kill some overhead
-    requests_session = requests.Session()
-
-    for i in range_list:
-        upload_one_piece(uploadUrl = uploadUrl, token = token, source_file = source_file,
-                         range_this = i, file_size = file_size, requests_session = requests_session)
-        bar.next()
-
-    bar.finish()
-
+        bar.finish()
+    # So it's a dir, upload it recursively.
+    else:
+        new_dest_path=dest_path+path_to_name(source_file)
+        for new_source_file in os.listdir(source_file):
+            upload_self(client, source_file+"/"+new_source_file, new_dest_path, chunksize)
     return True
 
+def upload_self_hack(client, source_file = '', dest_path = ''):
+    """OneDriveClient, str, str->Bool
+
+    Upload a file/dir via the SDK.
+    """
+
+    if not dest_path.endswith('/'):
+        dest_path += '/'
+
+    if source_file.endswith('/'):
+        source_file=source_file[:-1]
+
+    # check if it's a file
+    if os.path.isfile(source_file):
+        # token refresh
+        if token_time_to_live(client) < 50*60:
+            refresh_token(client)
+            
+        dest_path = ('' if path_to_remote_path(dest_path)=='/' else path_to_remote_path(dest_path)) + '/' + path_to_name(source_file)
+        # Stamps
+        print(" ")
+        print_time()
+        print_job_binary(source_file,dest_path)
+        
+        # upload with SDK. This is the only difference with upload_self(...)
+        for j in range(0,6):
+            if j==5:
+                print_error(note="Trial limit exceeded, skip this file.")
+                return False
+            try:
+                client.item(drive = "me", path = dest_path).upload_async(source_file)
+                break
+            except Exception as e:
+                print_error("Upload",str(e)+", will try again later.")
+                continue
+    
+    # so it's a directory
+    else:
+        new_dest_path=dest_path+path_to_name(source_file)+"/"
+        for new_source_file in os.listdir(source_file):
+            upload_self_hack(client, source_file+"/"+new_source_file, new_dest_path)
+
+    return True
+    
+    
 
 if __name__ == '__main__':
     pass
