@@ -68,9 +68,11 @@ Also you can clone this project, then execute ```python3 setup.py install``` or 
 
 There are 3 packages you should install:
 
-    onedrivesdk
-    progress
-    requests
+```
+onedrivesdk < 2
+progress
+requests
+```
 
 Do a ```pip install -r requirements.txt``` at the folder.
 
@@ -232,6 +234,9 @@ Driven by coffee, coffee and coffee.
 
 
 Collaborator/Dict Xiong, https://beardic.cn/, ```me [at] beardic.cn```.
+
+Furkan ÖZOĞUL (https://gitlab.com/ozogulf ) solved the SDK issue.  
+
 
 ### 中文说明
 

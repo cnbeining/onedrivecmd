@@ -18,7 +18,7 @@ Onedrive is a cloud-storage service provided by Microsoft. Education
 users can get 1TB of storage for free, which can be redeemed at
 https://products.office.com/en-us/student?tab=students .
 
-Since the recent update of Onedrive's API, there aren't a lot of \*nix
+Since the recent update of Onedrive’s API, there aren’t a lot of \*nix
 softwares that would provide support to Onedrive, most of them are
 syncing softwares: But I prefer have more control of what I am doing. So
 here it is, a tiny client that can do the jobs for you.
@@ -28,8 +28,8 @@ Features
 
 -  Ability to access files and folders using a path URI
 -  Configuration file (~/.onedrive.json)
--  folder/file get operations, and retry when failed (experimental)
--  folder/file put operations, and retry when failed (experimental)
+-  Folder/file get operations, and retry when failed (experimental)
+-  Folder/file put operations, and retry when failed (experimental)
 -  List operation (shows file size and timestamp)
 -  Download and upload with native progress bar (with option of
    downloading with aria2!)
@@ -45,43 +45,44 @@ Install
 
 As easy as: ``pip install onedrivecmd``!
 
-Also you can clone this project.
+Also you can clone this project, then execute
+``python3 setup.py install`` or ``python setup.py install``
 
 Usage
 ~~~~~
 
 ::
 
-    Usage onedrivecmd:
-        onedrivecmd -h 
-        onedrivecmd [OPTIONS] init
-        onedrivecmd [OPTIONS] init_business
-        onedrivecmd [OPTIONS] list od:/foo/bar/
-        onedrivecmd [OPTIONS] share od:/foo/doc.txt
-        onedrivecmd [OPTIONS] direct od:/foo/image.jpg
-        onedrivecmd [OPTIONS] get od:/foo/file.txt /tmp/
-        onedrivecmd [OPTIONS] get od:/boo/dir/ ./localdir/
-        onedrivecmd [OPTIONS] put /tmp/hello.txt od:/bar/
-        onedrivecmd [OPTIONS] put /tmp/dir/ od:/bar/
-        onedrivecmd [OPTIONS] delete od:/foo/bar
-        onedrivecmd [OPTIONS] mkdir od:/foo/bar/
-        onedrivecmd [OPTIONS] search foobar
-        onedrivecmd [OPTIONS] remote http://thecatapi.com/api/images/get?format=src&type=gif
-        onedrivecmd [OPTIONS] quota
+   Usage onedrivecmd:
+       onedrivecmd -h 
+       onedrivecmd [OPTIONS] init
+       onedrivecmd [OPTIONS] init_business
+       onedrivecmd [OPTIONS] list od:/foo/bar/
+       onedrivecmd [OPTIONS] share od:/foo/doc.txt
+       onedrivecmd [OPTIONS] direct od:/foo/image.jpg
+       onedrivecmd [OPTIONS] get od:/foo/file.txt /tmp/
+       onedrivecmd [OPTIONS] get od:/boo/dir/ ./localdir/
+       onedrivecmd [OPTIONS] put /tmp/hello.txt od:/bar/
+       onedrivecmd [OPTIONS] put /tmp/dir/ od:/bar/
+       onedrivecmd [OPTIONS] delete od:/foo/bar
+       onedrivecmd [OPTIONS] mkdir od:/foo/bar/
+       onedrivecmd [OPTIONS] search foobar
+       onedrivecmd [OPTIONS] remote http://thecatapi.com/api/images/get?format=src&type=gif
+       onedrivecmd [OPTIONS] quota
 
 
-      -conf="~/onedrive.json": Config file path, this file is as important as your password!
-      -h: Help
-      -hack: Use aria2 to download file, or the SDK's built-in uploader (without progress bar!)
-      -recursive=false: Recursive listing
-      -chunk=62914560: Chunk size when uploading
-      -url=False: Only display the URL when downloading, temp one
+     -conf="~/onedrive.json": Config file path, this file is as important as your password!
+     -h: Help
+     -hack: Use aria2 to download file, or the SDK's built-in uploader (without progress bar!)
+     -recursive=false: Recursive listing
+     -chunk=62914560: Chunk size when uploading 
+     -url=False: Only display the URL when downloading, temp one
 
 How to run onedrivecmd?
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Install dependencies
-^^^^^^^^^^^^^^^^^^^^
+Install dependencies:
+
 
 *Only when you are installing from source code*
 
@@ -89,14 +90,13 @@ There are 3 packages you should install:
 
 ::
 
-    onedrivesdk
-    progress
-    requests
+   onedrivesdk < 2
+   progress
+   requests
 
 Do a ``pip install -r requirements.txt`` at the folder.
 
-Login
-^^^^^
+Login:
 
 Do a ``onedrivecmd init`` , or ``onedrivecmd init_business`` if you are
 using Business or Office 365.
@@ -105,7 +105,7 @@ You shall be given a URL like
 
 ::
 
-    https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e
+   https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e
 
 Authorize your login.
 
@@ -130,130 +130,129 @@ To list directory contents, use:
 
 ::
 
-    $ onedrivecmd list od:/foo/bar/
+   $ onedrivecmd list od:/foo/bar/
 
-Names ending with '/' is a directory. The size of directory is the size
+Names ending with ‘/’ is a directory. The size of directory is the size
 of the sum of its content.
 
 To recursively list a directory use, -recursive option.
 
 ::
 
-    $ onedrivecmd -recursive list od:/foo/bar/
+   $ onedrivecmd -recursive list od:/foo/bar/
 
 The delete can only move the item to the trash bin, as there is no way
 of just delete the item. Make sure you clean your trash.
 
 ::
 
-    $ onedrivecmd delete od:/foo/bar/file
+   $ onedrivecmd delete od:/foo/bar/file
 
 Examples
 ~~~~~~~~
 
 ::
 
-    $ onedrivecmd  init
+   $ onedrivecmd  init
 
-    https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e
+   https://login.live.com/oauth20_authorize.srf?scope=wl.signin+wl.offline_access+onedrive.readwrite&redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=aeba6391-92fd-437d-a9d9-33a258b96c4e
 
-    Paste this URL into your browser, approve the app's access.
-    Copy all the code in the new window, and paste it below:
-    Paste code here: Ma0d6f772-****-e5ea-8d5a-******    
+   Paste this URL into your browser, approve the app's access.
+   Copy all the code in the new window, and paste it below:
+   Paste code here: Ma0d6f772-****-e5ea-8d5a-******    
 
-    $ onedrivecmd  init_business
-    ATTENTION: This is for Onedrive Business and Office 365 only.
-    If you are using normal Onedrive, lease exit and run
+   $ onedrivecmd  init_business
+   ATTENTION: This is for Onedrive Business and Office 365 only.
+   If you are using normal Onedrive, lease exit and run
 
-    onedrivecmd init
+   onedrivecmd init
 
-    https://login.microsoftonline.com/common/oauth2/authorize?redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=6fdb55b4-c905-4612-bd23-306c3918217c
+   https://login.microsoftonline.com/common/oauth2/authorize?redirect_uri=https%3A%2F%2Fod.cnbeining.com&response_type=code&client_id=6fdb55b4-c905-4612-bd23-306c3918217c
 
-    Paste this URL into your browser, approve the app's access.
-    Copy all the code in the new window, and paste it below:
-    Paste code here: (Very long!)
+   Paste this URL into your browser, approve the app's access.
+   Copy all the code in the new window, and paste it below:
+   Paste code here: (Very long!)
 
-    $ onedrivecmd list od:/
-    od:/133/    0   2016-09-24T04:17:58.957000Z
-    od:/134/    0   2016-09-24T05:11:17.190000Z
-    od:/New Folder/ 351 2016-09-22T03:02:25.423000Z
-    od:/1.png   342677  2016-09-24T04:28:51.617000Z
-    od:/OneDrive 入门.pdf 1159342 2016-08-23T03:03:55.043000Z
+   $ onedrivecmd list od:/
+   od:/133/    0   2016-09-24T04:17:58.957000Z
+   od:/134/    0   2016-09-24T05:11:17.190000Z
+   od:/New Folder/ 351 2016-09-22T03:02:25.423000Z
+   od:/1.png   342677  2016-09-24T04:28:51.617000Z
+   od:/OneDrive 入门.pdf 1159342 2016-08-23T03:03:55.043000Z
 
-    $ onedrivecmd put /tmp/demo/ od:/test/
-    
-    [2019-03-19 11:57:07]
-    /tmp/demo/index.html ==> od:/test/demo/index.html
-    Uploading |################################| 100.0% - 0s
+   $ onedrivecmd put /tmp/demo/ od:/test/
 
-    [2019-03-19 11:57:26]
-    /tmp/demo/Pic/1.png ==> od:/test/demo/Pic/1.png
-    Uploading |################################| 100.0% - 0s
+   [2019-03-19 11:57:07]
+   /tmp/demo/index.html ==> od:/test/demo/index.html
+   Uploading |################################| 100.0% - 0s
 
-    [2019-03-19 11:57:44]
-    /tmp/demo/Pic/2.png ==> od:/test/demo/Pic/2.png
-    Uploading |################################| 100.0% - 0s
+   [2019-03-19 11:57:26]
+   /tmp/demo/Pic/1.png ==> od:/test/demo/Pic/1.png
+   Uploading |################################| 100.0% - 0s
 
-    [2019-03-19 11:58:03]
-    /tmp/demo/Pic/test/365.ps1 ==> od:/test/demo/Pic/test/365.ps1
-    Uploading |################################| 100.0% - 0s
+   [2019-03-19 11:57:44]
+   /tmp/demo/Pic/2.png ==> od:/test/demo/Pic/2.png
+   Uploading |################################| 100.0% - 0s
 
-    [2019-03-19 11:58:22]
-    /tmp/demo/Pic/3.jpg ==> od:/test/demo/Pic/3.jpg
-    Uploading |################################| 100.0% - 0s
+   [2019-03-19 11:58:03]
+   /tmp/demo/Pic/test/365.ps1 ==> od:/test/demo/Pic/test/365.ps1
+   Uploading |################################| 100.0% - 0s
 
+   [2019-03-19 11:58:22]
+   /tmp/demo/Pic/3.jpg ==> od:/test/demo/Pic/3.jpg
+   Uploading |################################| 100.0% - 0s
 
-    $ onedrivecmd get od:/1.pdf
-    Downloading |######                          | 21.4% - 74s
+   $ onedrivecmd get od:/1.pdf
+   Downloading |######                          | 21.4% - 74s
 
-    # personal
-    $ onedrivecmd share od:/1.png
-    https://1drv.ms/u/s!AnpifX1Elagmb_7sFIiyr2ipY1k
+   # personal
+   $ onedrivecmd share od:/1.png
+   https://1drv.ms/u/s!AnpifX1Elagmb_7sFIiyr2ipY1k
 
-    $ onedrivecmd direct od:/1.png
-    https://onedrive.live.com/download?resid=26A895447D7D627A!111&authkey=!AP7sFIiyr2ipY1k
+   $ onedrivecmd direct od:/1.png
+   https://onedrive.live.com/download?resid=26A895447D7D627A!111&authkey=!AP7sFIiyr2ipY1k
 
-    # Office 365
-    $ onedrivecmd share od:/onedrive.json
-    https://ad-my.sharepoint.com/personal/email/_layouts/15/guestaccess.aspx?docid=xxx&authkey=xxx
+   # Office 365
+   $ onedrivecmd share od:/onedrive.json
+   https://ad-my.sharepoint.com/personal/email/_layouts/15/guestaccess.aspx?docid=xxx&authkey=xxx
 
-    $ onedrivecmd direct od:/onedrive.json
-    https://ad-my.sharepoint.com/personal/email/_layouts/15/download.aspx?docid=md5&authkey=xxx
+   $ onedrivecmd direct od:/onedrive.json
+   https://ad-my.sharepoint.com/personal/email/_layouts/15/download.aspx?docid=md5&authkey=xxx
 
-    $ onedrivecmd -hack get od:/1.png
-    [#e257f9 16KiB/334KiB(4%) CN:1 DL:230KiB ETA:1s]                                                                                                                            
-    09/24 02:10:56 [NOTICE] Download complete: **onedrivecmd/1.png
+   $ onedrivecmd -hack get od:/1.png
+   [#e257f9 16KiB/334KiB(4%) CN:1 DL:230KiB ETA:1s]                                                                                                                            
+   09/24 02:10:56 [NOTICE] Download complete: **onedrivecmd/1.png
 
-    Download Results:
-    gid   |stat|avg speed  |path/URI
-    ======+====+===========+=======================================================
-    e257f9|OK  |   343KiB/s|**onedrivecmd/1.png
+   Download Results:
+   gid   |stat|avg speed  |path/URI
+   ======+====+===========+=======================================================
+   e257f9|OK  |   343KiB/s|**onedrivecmd/1.png
 
-    Status Legend:
-    (OK):download completed.
+   Status Legend:
+   (OK):download completed.
 
-    $ onedrivecmd search file.txt
-    01DERSD4MVUNK66BVQRFFZZEDK7FILJSYS  file.txt    1073741824  2017-08-30T05:55:24Z
-    01DERSD4JFGCT7P2VFFVEI3KXDPASSCX2H  files.txt   89  2017-08-30T05:46:38Z
+   $ onedrivecmd search file.txt
+   01DERSD4MVUNK66BVQRFFZZEDK7FILJSYS  file.txt    1073741824  2017-08-30T05:55:24Z
+   01DERSD4JFGCT7P2VFFVEI3KXDPASSCX2H  files.txt   89  2017-08-30T05:46:38Z
 
-    $ onedrivecmd mkdir od:/145
+   $ onedrivecmd mkdir od:/145
 
-    $ onedrivecmd remote "http://wscont2.apps.microsoft.com/winstore/1x/.../Screenshot.225037.100000.jpg"
-    https://api.onedrive.com/v1.0/monitor/...
+   $ onedrivecmd remote "http://wscont2.apps.microsoft.com/winstore/1x/.../Screenshot.225037.100000.jpg"
+   https://api.onedrive.com/v1.0/monitor/...
 
-    $ onedrivecmd quota
+   $ onedrivecmd quota
 
-    Total Size: 1.0TiB,
-    Used: 1.6MiB,
-    Remaining: 1024.0GiB,
-    Deleted: 0.0B,
+   Total Size: 1.0TiB,
+   Used: 1.6MiB,
+   Remaining: 1024.0GiB,
+   Deleted: 0.0B,
 
-    Your state is: normal
+   Your state is: normal
 
 TODO
 ~~~~
 
--  Recursive 'mkdir'.
+-  Recursive ‘mkdir’.
 -  Perfect retry-when-failed function.
 -  Move
 -  Code refactoring
@@ -279,8 +278,9 @@ Beining, https://www.cnbeining.com/ , ``i [at] cnbeining.com`` .
 
 Driven by coffee, coffee and coffee.
 
-
 Collaborator/Dict Xiong, https://beardic.cn/, ``me [at] beardic.cn``.
+
+Furkan ÖZOĞUL (https://gitlab.com/ozogulf ) solved the SDK issue.
 
 中文说明
 ~~~~~~~~
