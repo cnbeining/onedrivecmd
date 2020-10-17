@@ -67,7 +67,7 @@ def upload_self(client, source_file = '', dest_path = '', chunksize = 10247680):
     if not dest_path.endswith('/'):
         dest_path += '/'
 
-    if source_file.endswith('/') and source_file is not "/":
+    if source_file.endswith('/') and source_file != "/":
         source_file=source_file[:-1]
 
     # check if it's a file

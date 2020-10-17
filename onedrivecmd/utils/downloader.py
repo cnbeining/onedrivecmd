@@ -34,7 +34,7 @@ def download_self(client, remote_path="", local_dir="", chunksize = 10247680, ur
     if not local_dir.endswith("/"):
         local_dir+="/"
 
-    if remote_path.endswith("/") and remote_path is not "/":
+    if remote_path.endswith("/") and remote_path != "/":
         remote_path=remote_path[:-1]
 
     item=get_remote_item(client, path=remote_path)

@@ -164,7 +164,7 @@ def do_get(client, args):
     """
     if not args.rest[-1].startswith('od:/'):
         local_dir=args.rest[-1]
-        if local_dir.endswith("/") and local_dir is not "/":
+        if local_dir.endswith("/") and local_dir != "/":
             local_dir=local_dir[:-1]
         args.rest=args.rest[:-1]
     else:
@@ -394,7 +394,7 @@ def do_delete(client, args):
             req = requests.delete(client.base_url + '/drive/items/{id}'.format(id = f.id),
                                   headers = {'Authorization': 'bearer {access_token}'.format(
                                       access_token = get_access_token(client)), })
-            if req.status_code is not 204:
+            if req.status_code != 204:
                 print_error("Request", str(req.status_code)+" "+req.json()['error']['message'])
                 return None
 
