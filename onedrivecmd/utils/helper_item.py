@@ -28,7 +28,7 @@ def get_remote_item(client, path = '', id = ''):
     try:
         if path != '':  # check path
             path = od_path_to_api_path(path)
-            if path.endswith("/") and path is not "/":
+            if path.endswith("/") and path != "/":
                 path=path[:-1]
             f = client.item(drive = 'me', path = path).get()
         elif id != '':  # check id
@@ -48,15 +48,15 @@ def get_remote_folder_children(client, path="", id=""):
     work with path or id.
     """
     try:
-        if path is not "":
+        if path != "":
             path = od_path_api_path(path)
             #f = client.item(drive="me", path=path).get()
             #if not f.folder:
             #    return None
-            if path.endswith("/") and path is not "/":
+            if path.endswith("/") and path != "/":
                 path=path[:-1]
             f = client.item(drive="me", path=path).children.get()
-        elif id is not "":
+        elif id != "":
             #f = client.item(drive="me", id=id).get()
             #if not f.folder:
             #    return None

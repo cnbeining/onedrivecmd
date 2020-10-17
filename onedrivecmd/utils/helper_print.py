@@ -14,9 +14,9 @@ def print_error(error_type="",note=""):
     will be printed in red.
     """
 
-    if error_type is "":
+    if error_type == "":
         print("\033[31m"+note+"\033[0m")
-    elif note is "":
+    elif note == "":
         print("\033[31m"+error_type+" error.\033[0m")
     else:
         print("\033[31m"+error_type+" error:\033[0m "+note)
